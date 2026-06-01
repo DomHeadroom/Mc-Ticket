@@ -1,0 +1,45 @@
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100dvh;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #BE000A;
+}
+
+mat-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+}
+
+.logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.logo img {
+  width: 100px;
+  height: 100px;
+}
+
+.title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0 0 24px;
+  color: #333;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+button[mat-flat-button] {
+  height: 48px;
+  font-size: 1rem;
+}

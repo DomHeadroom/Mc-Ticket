@@ -1,0 +1,48 @@
+<mat-card>
+  <mat-card-content>
+    <div class="logo">
+      <img src="assets/logo.png" alt="Logo" />
+    </div>
+
+    <h2 class="title">Login to your account</h2>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input
+          matInput
+          type="email"
+          formControlName="email"
+          placeholder="Enter E-mail"
+        />
+        @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        } @else if (form.controls.email.hasError('pattern') && form.controls.email.touched) {
+          <mat-error>Inserisci un indirizzo email valido (es. nome@dominio.com)</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input
+          matInput
+          type="password"
+          formControlName="password"
+          placeholder="Enter password"
+        />
+        @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+          <mat-error>Campo obbligatorio</mat-error>
+        }
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="form.invalid"
+      >
+        Login
+      </button>
+    </form>
+  </mat-card-content>
+</mat-card>
