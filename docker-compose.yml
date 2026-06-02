@@ -6,9 +6,7 @@ services:
     shm_size: 128mb
     volumes:
       - pgdata:/var/lib/postgresql/18/docker
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file: .env
     ports:
       - 127.0.0.1:5432:5432
 
@@ -23,6 +21,12 @@ services:
     restart: always
     ports:
       - 127.0.0.1:80:80
+  
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/mcticket
 
 volumes:
   pgdata:
