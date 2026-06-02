@@ -6,15 +6,16 @@ import { guestGuard } from './auth/guards/guest-guard';
 
 export const routes: Routes = [
   {
-    path: 'login',
+    path: '',
     canMatch: [guestGuard],
-    component: Login,
+    children: [
+      { path: 'login', component: Login },
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
+    ],
   },
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
-  
   {
     path: '',
-    canActivate: [authGuard],
+    canMatch: [authGuard],
     children: [
       { path: 'home', component: Home },
       { path: '', redirectTo: 'home', pathMatch: 'full' },
