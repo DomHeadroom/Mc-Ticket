@@ -29,6 +29,12 @@ services:
       - 127.0.0.1:8080:8080
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/mcticket
+  
+  nlp:
+    build: ./nlp
+    restart: always
+    ports:
+      - 127.0.0.1:8000:8000
 
 volumes:
   pgdata:
