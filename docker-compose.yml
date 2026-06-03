@@ -29,6 +29,7 @@ services:
       - 127.0.0.1:8080:8080
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/mcticket
+      NLP_BASE_URL: http://nlp:8000
   
   nlp:
     build: ./nlp
