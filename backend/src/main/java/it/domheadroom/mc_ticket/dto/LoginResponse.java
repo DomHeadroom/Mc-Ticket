@@ -1,5 +1,8 @@
 package it.domheadroom.mc_ticket.dto;
 
+import lombok.Getter;
+
+@Getter
 public class LoginResponse {
 
     private String token;
@@ -14,8 +17,4 @@ public class LoginResponse {
         this.fullName = fullName;
     }
 
-    public String getToken() { return token; }
-    public String getEmail() { return email; }
-    public String getRole() { return role; }
-    public String getFullName() { return fullName; }
 }
