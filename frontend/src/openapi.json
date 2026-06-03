@@ -50,6 +50,166 @@
                     }
                 }
             }
+        },
+        "/api/tickets": {
+            "get": {
+                "tags": [
+                    "ticket-controller"
+                ],
+                "operationId": "getAllTickets",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TicketResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "ticket-controller"
+                ],
+                "operationId": "createTicketWithAttachment",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "ticket": {
+                                        "$ref": "#/components/schemas/CreateTicketRequest"
+                                    },
+                                    "attachment": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "ticket"
+                                ]
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateTicketRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TicketResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tickets/bulk": {
+            "post": {
+                "tags": [
+                    "ticket-controller"
+                ],
+                "operationId": "bulkImport",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BulkImportResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/tickets/{id}": {
+            "get": {
+                "tags": [
+                    "ticket-controller"
+                ],
+                "operationId": "getTicket",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TicketResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/categories": {
+            "get": {
+                "tags": [
+                    "ticket-controller"
+                ],
+                "operationId": "getActiveCategories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CategoryResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -64,6 +224,168 @@
                     "password": {
                         "type": "string",
                         "minLength": 1
+                    }
+                }
+            },
+            "CreateTicketRequest": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "minLength": 0
+                    },
+                    "description": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "categorySlug": {
+                        "type": "string"
+                    },
+                    "urgencyReported": {
+                        "type": "string"
+                    },
+                    "openedAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "TicketResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "in_progress",
+                            "pending_user",
+                            "resolved",
+                            "closed",
+                            "rejected"
+                        ]
+                    },
+                    "urgencyReported": {
+                        "type": "string",
+                        "enum": [
+                            "low",
+                            "medium",
+                            "high",
+                            "critical"
+                        ]
+                    },
+                    "priorityComputed": {
+                        "type": "string",
+                        "enum": [
+                            "p1",
+                            "p2",
+                            "p3",
+                            "p4"
+                        ]
+                    },
+                    "categoryUser": {
+                        "type": "string"
+                    },
+                    "categoryAuto": {
+                        "type": "string"
+                    },
+                    "requesterName": {
+                        "type": "string"
+                    },
+                    "requesterEmail": {
+                        "type": "string"
+                    },
+                    "assignedAgentName": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "type": "string"
+                    },
+                    "nlpProcessed": {
+                        "type": "boolean"
+                    },
+                    "openedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "resolvedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "closedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "BulkImportResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "fileName": {
+                        "type": "string"
+                    },
+                    "fileFormat": {
+                        "type": "string"
+                    },
+                    "totalRows": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "processedRows": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "failedRows": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "queued",
+                            "processing",
+                            "completed",
+                            "failed"
+                        ]
+                    }
+                }
+            },
+            "CategoryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
                     }
                 }
             }

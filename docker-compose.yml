@@ -30,6 +30,7 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/mcticket
       NLP_BASE_URL: http://nlp:8000
+      UPLOAD_DIR: /uploads
   
   nlp:
     build: ./nlp
