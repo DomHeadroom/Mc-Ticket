@@ -1,8 +1,15 @@
 @if (auth.isLoggedIn) {
   <mat-toolbar color="primary">
-    <img ngSrc="assets/logo.png" alt="McTicket" class="toolbar-logo" height="40" width="40" priority />
-    <span class="toolbar-spacer"></span>
     @let state = auth.state();
+    <a routerLink="/" class="logo-link">
+      <img ngSrc="assets/logo.png" alt="McTicket" class="toolbar-logo" height="40" width="40" priority />
+    </a>
+    @if (state?.role === 'admin') {
+      <button mat-button routerLink="/tickets" class="nav-link" matTooltip="Ticket List">
+        Richieste
+      </button>
+    }
+    <span class="toolbar-spacer"></span>
     @if (state) {
       <span class="user-info">{{ state.fullName }} ({{ state.role }})</span>
       <button mat-icon-button (click)="auth.logout()" matTooltip="Logout">

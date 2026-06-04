@@ -25,6 +25,10 @@ mat-toolbar {
   border-radius: 8px;
 }
 
+.nav-link {
+  margin-left: 8px;
+}
+
 main {
   display: block;
 }
