@@ -1,7 +1,7 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthControllerService, LoginRequest } from '../generated';
-import { map, Observable } from 'rxjs';
+import { tap } from 'rxjs';
 
 export interface AuthState {
   token: string;
@@ -15,41 +15,39 @@ export class AuthService {
   private readonly api = inject(AuthControllerService);
   private readonly router = inject(Router);
 
-  login(email: string, password: string): Observable<object> {
+  readonly state = signal<AuthState | null>(this.loadState());
+
+  login(email: string, password: string) {
     return this.api
       .login({ email, password } as LoginRequest, 'body', false, {
         httpHeaderAccept: 'application/json' as '*/*',
       })
       .pipe(
-        map((res) => {
-          this.setSession(res as Record<string, string>);
-          return res;
+        tap((res) => {
+          const data = res as Record<string, string>;
+          this.state.set({
+            token: data['token'],
+            email: data['email'],
+            role: data['role'],
+            fullName: data['fullName'],
+          });
+          localStorage.setItem('auth', JSON.stringify(this.state()));
         }),
       );
   }
 
   logout(): void {
     localStorage.removeItem('auth');
+    this.state.set(null);
     this.router.navigate(['/login']);
   }
 
-  get state(): AuthState | null {
+  get isLoggedIn(): boolean {
+    return this.state() !== null;
+  }
+
+  private loadState(): AuthState | null {
     const raw = localStorage.getItem('auth');
     return raw ? (JSON.parse(raw) as AuthState) : null;
-  }
-
-  get isLoggedIn(): boolean {
-    const state = this.state;
-    return state !== null && !!state.token;
-  }
-
-  private setSession(res: Record<string, string>): void {
-    const state: AuthState = {
-      token: res['token'],
-      email: res['email'],
-      role: res['role'],
-      fullName: res['fullName'],
-    };
-    localStorage.setItem('auth', JSON.stringify(state));
   }
 }

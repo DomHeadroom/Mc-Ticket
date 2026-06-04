@@ -1,0 +1,35 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+mat-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.user-info {
+  font-size: 14px;
+  margin-right: 12px;
+  opacity: 0.9;
+}
+
+.toolbar-logo {
+  height: 40px;
+  width: auto;
+  border-radius: 8px;
+}
+
+main {
+  display: block;
+}
+
+.mat-toolbar.mat-primary {
+  background-color: #be000a;
+  color: white;
+}

@@ -1,1 +1,17 @@
-<router-outlet></router-outlet>
+@if (auth.isLoggedIn) {
+  <mat-toolbar color="primary">
+    <img ngSrc="assets/logo.png" alt="McTicket" class="toolbar-logo" height="40" width="40" priority />
+    <span class="toolbar-spacer"></span>
+    @let state = auth.state();
+    @if (state) {
+      <span class="user-info">{{ state.fullName }} ({{ state.role }})</span>
+      <button mat-icon-button (click)="auth.logout()" matTooltip="Logout">
+        <mat-icon>logout</mat-icon>
+      </button>
+    }
+  </mat-toolbar>
+}
+
+<main>
+  <router-outlet />
+</main>

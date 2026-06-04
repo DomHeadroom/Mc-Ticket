@@ -1,1 +1,127 @@
-<p>home works!</p>
+<div class="home-container">
+
+  <mat-card class="form-card">
+    <mat-card-header>
+      <mat-card-title>Nuovo Ticket</mat-card-title>
+      <mat-card-subtitle>Inserisci i dati del ticket di assistenza</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form">
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Titolo</mat-label>
+          <input matInput formControlName="title" placeholder="Es. Stampante non funzionante" maxlength="500" />
+          @if (form.get('title')?.hasError('required') && form.get('title')?.touched) {
+            <mat-error>Il titolo è obbligatorio</mat-error>
+          }
+          @if (form.get('title')?.hasError('maxlength')) {
+            <mat-error>Massimo 500 caratteri</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Testo</mat-label>
+          <textarea matInput formControlName="description" placeholder="Descrivi il problema..." rows="5"></textarea>
+          @if (form.get('description')?.hasError('required') && form.get('description')?.touched) {
+            <mat-error>Il testo è obbligatorio</mat-error>
+          }
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Categoria</mat-label>
+            <mat-select formControlName="categorySlug" disableOptionCentering>
+              <mat-option value="">Nessuna</mat-option>
+              @for (cat of categories(); track cat.slug) {
+                <mat-option [value]="cat.slug">{{ cat.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Priorità</mat-label>
+            <mat-select formControlName="urgencyReported" disableOptionCentering>
+              <mat-option value="low">Bassa</mat-option>
+              <mat-option value="medium">Media</mat-option>
+              <mat-option value="high">Alta</mat-option>
+              <mat-option value="critical">Critica</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+        </div>
+
+        <div class="file-upload">
+          <input type="file" #attachmentInput (change)="onFileSelected($event)" accept=".txt,.log,.json,.csv" hidden />
+          <button type="button" mat-stroked-button (click)="attachmentInput.click()">
+            <mat-icon>attach_file</mat-icon> Allega file
+          </button>
+          @if (selectedFile(); as file) {
+            <mat-chip-set>
+              <mat-chip highlighted color="primary" (removed)="selectedFile.set(null)">
+                {{ file.name }}
+                <button matChipRemove>
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip>
+            </mat-chip-set>
+          }
+          <span class="file-hint">.txt, .log, .json, .csv</span>
+        </div>
+
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button type="button" class="reset-link" (click)="onReset()">Annulla modifiche</button>
+      <span class="actions-spacer"></span>
+      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || submitting()">
+        @if (submitting()) {
+          <mat-progress-bar mode="indeterminate" class="btn-progress"></mat-progress-bar>
+        }
+        Crea Ticket
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card class="bulk-card">
+    <mat-card-header>
+      <mat-card-title>Importazione Batch</mat-card-title>
+      <mat-card-subtitle>Carica un file CSV o JSON per creare più ticket contemporaneamente</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <p class="bulk-info">
+        Il file deve contenere una lista di ticket con i campi <code>title</code> e <code>description</code> (obbligatori),
+        e opzionalmente <code>categorySlug</code>, <code>urgencyReported</code>, <code>openedAt</code>.
+      </p>
+
+      <div class="file-upload">
+        <input type="file" #bulkFileInput (change)="onBulkFileSelected($event)" accept=".csv,.json" hidden />
+        <button type="button" mat-stroked-button (click)="bulkFileInput.click()">
+          <mat-icon>upload_file</mat-icon> Scegli file
+        </button>
+        @if (selectedBulkFile(); as file) {
+          <mat-chip-set>
+            <mat-chip highlighted color="primary" (removed)="selectedBulkFile.set(null)">
+              {{ file.name }}
+              <button matChipRemove>
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip>
+          </mat-chip-set>
+        }
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-raised-button color="accent" (click)="onSubmitBulk()" [disabled]="!selectedBulkFile() || bulkSubmitting()">
+        @if (bulkSubmitting()) {
+          <mat-progress-bar mode="indeterminate" class="btn-progress"></mat-progress-bar>
+        }
+        Importa
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+</div>
