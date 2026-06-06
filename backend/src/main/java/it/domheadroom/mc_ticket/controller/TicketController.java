@@ -5,9 +5,12 @@ import it.domheadroom.mc_ticket.dto.CategoryResponse;
 import it.domheadroom.mc_ticket.dto.CreateTicketRequest;
 import it.domheadroom.mc_ticket.dto.TicketResponse;
 import it.domheadroom.mc_ticket.entity.User;
-import it.domheadroom.mc_ticket.repository.CategoryRepository;
 import it.domheadroom.mc_ticket.service.TicketService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +27,9 @@ import java.util.UUID;
 public class TicketController {
 
     private final TicketService ticketService;
-    private final CategoryRepository categoryRepository;
 
-    public TicketController(TicketService ticketService, CategoryRepository categoryRepository) {
+    public TicketController(TicketService ticketService) {
         this.ticketService = ticketService;
-        this.categoryRepository = categoryRepository;
     }
 
     @PostMapping(value = "/tickets", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -61,8 +62,9 @@ public class TicketController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/tickets")
-    public ResponseEntity<List<TicketResponse>> getAllTickets() {
-        return ResponseEntity.ok(ticketService.getAllTickets());
+    public ResponseEntity<Page<TicketResponse>> getAllTickets(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(ticketService.getAllTickets(pageable));
     }
 
     @GetMapping("/tickets/{id}")
@@ -74,10 +76,7 @@ public class TicketController {
 
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryResponse>> getActiveCategories() {
-        var categories = categoryRepository.findAll().stream()
-                .filter(c -> Boolean.TRUE.equals(c.getIsActive()))
-                .map(CategoryResponse::from)
-                .toList();
-        return ResponseEntity.ok(categories);
+        return ResponseEntity.ok(ticketService.getActiveCategories());
     }
 }
+

@@ -2,13 +2,11 @@ package it.domheadroom.mc_ticket.service;
 
 import it.domheadroom.mc_ticket.dto.LoginRequest;
 import it.domheadroom.mc_ticket.dto.LoginResponse;
+import it.domheadroom.mc_ticket.exception.AuthException;
 import it.domheadroom.mc_ticket.repository.UserRepository;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 public class AuthService {
@@ -23,26 +21,24 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public ResponseEntity<?> login(LoginRequest request) {
-        var userOpt = userRepository.findByEmail(request.getEmail());
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Credenziali non valide"));
-        }
-
-        var user = userOpt.get();
+    /**
+     * Autentica l'utente e restituisce i dati di sessione.
+     *
+     * @throws AuthException con status 401 se le credenziali sono errate o l'utente è disabilitato
+     */
+    public LoginResponse login(LoginRequest request) {
+        var user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AuthException("Credenziali non valide", HttpStatus.UNAUTHORIZED));
 
         if (!user.getIsActive()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Utente disabilitato"));
+            throw new AuthException("Utente disabilitato", HttpStatus.UNAUTHORIZED);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Credenziali non valide"));
+            throw new AuthException("Credenziali non valide", HttpStatus.UNAUTHORIZED);
         }
 
         String token = jwtService.generateToken(user.getEmail(), user.getRole());
-        return ResponseEntity.ok(new LoginResponse(token, user.getEmail(), user.getRole(), user.getFullName()));
+        return new LoginResponse(token, user.getEmail(), user.getRole(), user.getFullName());
     }
 }

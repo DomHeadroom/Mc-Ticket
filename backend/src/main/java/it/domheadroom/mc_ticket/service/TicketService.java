@@ -3,12 +3,15 @@ package it.domheadroom.mc_ticket.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.domheadroom.mc_ticket.dto.BulkImportResponse;
+import it.domheadroom.mc_ticket.dto.CategoryResponse;
 import it.domheadroom.mc_ticket.dto.CreateTicketRequest;
 import it.domheadroom.mc_ticket.dto.TicketResponse;
 import it.domheadroom.mc_ticket.entity.*;
 import it.domheadroom.mc_ticket.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,14 +46,15 @@ public class TicketService {
                          AttachmentRepository attachmentRepository,
                          BulkImportRepository bulkImportRepository,
                          FileStorageService fileStorageService,
-                         NlpService nlpService) {
+                         NlpService nlpService,
+                         ObjectMapper objectMapper) {
         this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
         this.attachmentRepository = attachmentRepository;
         this.bulkImportRepository = bulkImportRepository;
         this.fileStorageService = fileStorageService;
         this.nlpService = nlpService;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     public TicketResponse createTicket(CreateTicketRequest req, User requester) {
@@ -109,15 +113,21 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public List<TicketResponse> getAllTickets() {
-        return ticketRepository.findAll().stream()
-                .map(TicketResponse::from)
-                .toList();
+    public Page<TicketResponse> getAllTickets(Pageable pageable) {
+        return ticketRepository.findAll(pageable).map(TicketResponse::from);
     }
 
     @Transactional(readOnly = true)
     public Optional<TicketResponse> getTicket(UUID id) {
         return ticketRepository.findById(id).map(TicketResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryResponse> getActiveCategories() {
+        return categoryRepository.findAll().stream()
+                .filter(c -> Boolean.TRUE.equals(c.getIsActive()))
+                .map(CategoryResponse::from)
+                .toList();
     }
 
     public BulkImportResponse bulkImport(MultipartFile file, User uploader) {
