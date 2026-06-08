@@ -8,14 +8,6 @@ app = FastAPI(title="McTicket NLP Service")
 
 
 class Ticket(BaseModel):
-    ticketId: int
-    title: str
-    description: str
-    category_hint: Optional[str] = None
-    urgency_hint: Optional[str] = None
-
-
-class BatchTicket(BaseModel):
     title: str
     description: str
     category_hint: Optional[str] = None
@@ -49,7 +41,7 @@ def analyze_ticket(ticket: Ticket):
 
 
 @app.post("/analyze-batch", response_model=List[AnalyzeResponse])
-def analyze_batch(tickets: List[BatchTicket]):
+def analyze_batch(tickets: List[Ticket]):
     return [analyze(t.title, t.description) for t in tickets]
 
 

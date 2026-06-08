@@ -57,7 +57,7 @@ CATEGORY_KEYWORDS = {
         "rete", "vpn", "connessione", "dns", "router", "firewall", "proxy",
         "cablaggio", "switch", "wi-fi", "lan", "wan", "ping", "timeout",
         "latenza", "banda", "tcp", "ip", "dhcp", "nat", "gateway",
-        "access point", "rete", "connettività",
+        "access point", "connettività",
     ],
     "database": [
         "database", "db", "sql", "query", "mysql", "postgresql",
@@ -72,7 +72,7 @@ CATEGORY_KEYWORDS = {
         "null pointer", "segmentation fault", "non funziona",
         "malfunzionamento", "anomalia", "errore software",
         "eccezione", "fallimento", "pianterello", "si blocca",
-        "non risponde", "crash", "freeze", "eccezione",
+        "non risponde", "freeze", "eccezione",
     ],
     "configurazione": [
         "configurazione", "config", "impostazione", "settaggio",
