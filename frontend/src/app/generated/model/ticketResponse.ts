@@ -23,6 +23,7 @@ export interface TicketResponse {
     assignedAgentName?: string;
     source?: string;
     nlpProcessed?: boolean;
+    keywords?: Array<string>;
     openedAt?: string;
     resolvedAt?: string;
     closedAt?: string;

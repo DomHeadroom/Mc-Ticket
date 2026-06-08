@@ -78,12 +78,19 @@ export class Home implements OnInit {
     this.submitting.set(true);
 
     const raw = this.form.getRawValue();
-    this.ticketApi.createTicket({
+    const ticket = {
       title: raw.title!,
       description: raw.description!,
       categorySlug: raw.categorySlug || undefined,
       urgencyReported: raw.urgencyReported as 'low' | 'medium' | 'high' | 'critical' | undefined,
-    }).subscribe({
+    };
+
+    const file = this.selectedFile();
+    const request = file
+      ? this.ticketApi.createTicketWithAttachment(ticket, file)
+      : this.ticketApi.createTicket(ticket);
+
+    request.subscribe({
       next: () => {
         this.snackBar.open('Ticket creato con successo', 'Chiudi', { duration: 3000 });
         this.form.reset({ title: '', description: '', categorySlug: '', urgencyReported: 'medium' });

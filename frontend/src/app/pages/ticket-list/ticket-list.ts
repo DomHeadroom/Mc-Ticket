@@ -1,12 +1,40 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
-import { TicketControllerService, TicketResponse } from '../../generated';
+import { MatPaginatorModule, PageEvent, MatPaginatorIntl } from '@angular/material/paginator';
+import { TicketResponse, BASE_PATH } from '../../generated';
+
+interface PageResponse {
+  content: TicketResponse[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
 
 @Component({
   selector: 'app-ticket-list',
-  imports: [DatePipe, MatTableModule, MatCardModule],
+  imports: [DatePipe, MatTableModule, MatCardModule, MatPaginatorModule],
+  providers: [
+    {
+      provide: MatPaginatorIntl,
+      useValue: {
+        itemsPerPageLabel: 'Elementi per pagina',
+        nextPageLabel: 'Prossima',
+        previousPageLabel: 'Precedente',
+        firstPageLabel: 'Prima pagina',
+        lastPageLabel: 'Ultima pagina',
+        getRangeLabel: (page: number, size: number, length: number) => {
+          if (length === 0) return '0 di 0';
+          const start = page * size + 1;
+          const end = Math.min((page + 1) * size, length);
+          return `${start} - ${end} di ${length}`;
+        },
+      } as MatPaginatorIntl,
+    },
+  ],
   template: `
     <div class="container">
       <mat-card>
@@ -29,12 +57,22 @@ import { TicketControllerService, TicketResponse } from '../../generated';
 
             <ng-container matColumnDef="urgency">
               <th mat-header-cell *matHeaderCellDef>Priorità</th>
-              <td mat-cell *matCellDef="let t">{{ t.urgencyReported }}</td>
+              <td mat-cell *matCellDef="let t">{{ priorityLabel(t.urgencyReported) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="categoryAuto">
+              <th mat-header-cell *matHeaderCellDef>Categoria NLP</th>
+              <td mat-cell *matCellDef="let t">{{ categoryLabel(t.categoryAuto) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="keywords">
+              <th mat-header-cell *matHeaderCellDef>Keywords</th>
+              <td mat-cell *matCellDef="let t">{{ (t.keywords ?? []).slice(0, 3).join(', ') }}</td>
             </ng-container>
 
             <ng-container matColumnDef="createdAt">
               <th mat-header-cell *matHeaderCellDef>Creato il</th>
-              <td mat-cell *matCellDef="let t">{{ t.createdAt | date:'short' }}</td>
+              <td mat-cell *matCellDef="let t">{{ t.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -44,49 +82,79 @@ import { TicketControllerService, TicketResponse } from '../../generated';
           @if (tickets().length === 0) {
             <p class="empty">Nessun ticket trovato.</p>
           }
+
+          @if (totalPages() > 1) {
+            <mat-paginator
+              [length]="totalElements()"
+              [pageSize]="pageSize()"
+              [pageIndex]="page()"
+              (page)="onPage($event)"
+              showFirstLastButtons
+            ></mat-paginator>
+          }
         </mat-card-content>
       </mat-card>
     </div>
   `,
-  styles: [`
-    .container {
-      max-width: 1200px;
-      margin: 32px auto;
-      padding: 0 16px;
-    }
-    .ticket-table {
-      width: 100%;
-    }
-    .empty {
-      text-align: center;
-      padding: 32px;
-      color: rgba(0,0,0,0.5);
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-    .status-open { background: #e3f2fd; color: #1565c0; }
-    .status-in_progress { background: #fff3e0; color: #e65100; }
-    .status-pending_user { background: #f3e5f5; color: #7b1fa2; }
-    .status-resolved { background: #e8f5e9; color: #2e7d32; }
-    .status-closed { background: #eceff1; color: #546e7a; }
-    .status-rejected { background: #ffebee; color: #c62828; }
-  `],
+  styleUrl: 'ticket-list.css',
 })
 export class TicketList implements OnInit {
-  private readonly ticketApi = inject(TicketControllerService);
+  private readonly http = inject(HttpClient);
+  private readonly basePath = inject(BASE_PATH);
 
   protected readonly tickets = signal<TicketResponse[]>([]);
-  protected readonly columns = ['title', 'status', 'urgency', 'createdAt'];
+  protected readonly totalElements = signal(0);
+  protected readonly totalPages = signal(0);
+  protected readonly page = signal(0);
+  protected readonly pageSize = signal(20);
+  protected readonly columns = ['title', 'status', 'urgency', 'categoryAuto', 'keywords', 'createdAt'];
 
   ngOnInit() {
-    this.ticketApi.getAllTickets().subscribe({
-      next: (res) => this.tickets.set(res),
+    this.loadTickets();
+  }
+
+  private loadTickets(): void {
+    const params = new HttpParams()
+      .set('page', this.page())
+      .set('size', this.pageSize());
+
+    this.http.get<PageResponse>(`${this.basePath}/api/tickets`, { params }).subscribe({
+      next: (res) => {
+        this.tickets.set(res.content);
+        this.totalElements.set(res.totalElements);
+        this.totalPages.set(res.totalPages);
+      },
     });
+  }
+
+  protected onPage(e: PageEvent): void {
+    this.page.set(e.pageIndex);
+    this.pageSize.set(e.pageSize);
+    this.loadTickets();
+  }
+
+  protected priorityLabel(priority: string | undefined): string {
+    const labels: Record<string, string> = {
+      low: 'Bassa',
+      medium: 'Media',
+      high: 'Alta',
+      critical: 'Critica',
+    };
+    return labels[priority ?? ''] ?? priority ?? '';
+  }
+
+  protected categoryLabel(slug: string | undefined): string {
+    if (!slug) return '-';
+    const labels: Record<string, string> = {
+      rete: 'Rete',
+      database: 'Database',
+      'bug-applicativo': 'Bug Applicativo',
+      configurazione: 'Configurazione',
+      hardware: 'Hardware',
+      'servizi-web': 'Servizi Web',
+      altro: 'Altro',
+    };
+    return labels[slug] ?? slug;
   }
 
   protected statusLabel(status: string): string {
