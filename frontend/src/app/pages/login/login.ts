@@ -1,11 +1,13 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -15,6 +17,7 @@ import { AuthService } from '../../auth/auth.service';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatIconModule,
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',
@@ -29,12 +32,19 @@ export class Login {
     password: ['', Validators.required],
   });
 
+  protected readonly hide = signal(true);
+  protected readonly errorMsg = signal('');
+
   protected onSubmit(): void {
     if (this.form.invalid) return;
+    this.errorMsg.set('');
     const { email, password } = this.form.getRawValue();
     this.auth.login(email, password).subscribe({
       next: () => this.router.navigate(['/']),
-      error: () => console.error('Login fallito'),
+      error: (err: HttpErrorResponse) => {
+        const message = err.error?.error || 'Errore durante il login. Riprova.';
+        this.errorMsg.set(message);
+      },
     });
   }
 }

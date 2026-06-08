@@ -6,6 +6,10 @@
 
     <h2 class="title">Login to your account</h2>
 
+    @if (errorMsg(); as msg) {
+      <div class="error-banner" role="alert">{{ msg }}</div>
+    }
+
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <mat-form-field appearance="outline">
         <mat-label>Email</mat-label>
@@ -17,8 +21,8 @@
         />
         @if (form.controls.email.hasError('required') && form.controls.email.touched) {
           <mat-error>Campo obbligatorio</mat-error>
-        } @else if (form.controls.email.hasError('pattern') && form.controls.email.touched) {
-          <mat-error>Inserisci un indirizzo email valido (es. nome@dominio.com)</mat-error>
+        } @else if (form.controls.email.hasError('email') && form.controls.email.touched) {
+          <mat-error>Inserisci un indirizzo email valido</mat-error>
         }
       </mat-form-field>
 
@@ -26,10 +30,19 @@
         <mat-label>Password</mat-label>
         <input
           matInput
-          type="password"
+          [type]="hide() ? 'password' : 'text'"
           formControlName="password"
           placeholder="Enter password"
         />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="hide.set(!hide())"
+          [attr.aria-label]="hide() ? 'Mostra password' : 'Nascondi password'"
+        >
+          <mat-icon>{{ hide() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
         @if (form.controls.password.hasError('required') && form.controls.password.touched) {
           <mat-error>Campo obbligatorio</mat-error>
         }
