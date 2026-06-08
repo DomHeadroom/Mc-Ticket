@@ -117,7 +117,7 @@ public class TicketService {
             log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
         }
 
-        return TicketResponse.from(ticket, List.of());
+        return TicketResponse.from(ticket, List.of(), 0);
     }
 
     @Transactional(readOnly = true)
@@ -125,12 +125,22 @@ public class TicketService {
         var page = ticketRepository.findAll(pageable);
         var tickets = page.getContent();
         var ids = tickets.stream().map(Ticket::getId).toList();
+
         var keywordsById = ticketKeywordRepository.findByIdTicketIdIn(ids).stream()
             .collect(Collectors.groupingBy(
                 tk -> tk.getId().getTicketId(),
                 Collectors.mapping(tk -> tk.getKeyword().getTerm(), Collectors.toList())
             ));
-        return page.map(t -> TicketResponse.from(t, keywordsById.getOrDefault(t.getId(), List.of())));
+
+        var attachmentCounts = attachmentRepository.findByTicketIdIn(ids).stream()
+            .collect(Collectors.groupingBy(
+                a -> a.getTicket().getId(),
+                Collectors.counting()
+            ));
+
+        return page.map(t -> TicketResponse.from(t,
+            keywordsById.getOrDefault(t.getId(), List.of()),
+            attachmentCounts.getOrDefault(t.getId(), 0L).intValue()));
     }
 
     @Transactional(readOnly = true)
@@ -139,7 +149,8 @@ public class TicketService {
                 .map(t -> TicketResponse.from(t,
                     ticketKeywordRepository.findByIdTicketIdOrderByRelevanceScoreDesc(id).stream()
                         .map(tk -> tk.getKeyword().getTerm())
-                        .toList()));
+                        .toList(),
+                    attachmentRepository.countByTicketId(id)));
     }
 
     @Transactional(readOnly = true)
@@ -249,7 +260,11 @@ public class TicketService {
                 var values = line.split(",");
                 var map = new java.util.HashMap<String, String>();
                 for (int i = 0; i < headers.length && i < values.length; i++) {
-                    map.put(headers[i].trim(), values[i].trim());
+                    var val = values[i].trim();
+                    if (val.startsWith("\"") && val.endsWith("\"") && val.length() >= 2) {
+                        val = val.substring(1, val.length() - 1);
+                    }
+                    map.put(headers[i].trim(), val);
                 }
                 requests.add(new CreateTicketRequest(
                         map.getOrDefault("title", ""),

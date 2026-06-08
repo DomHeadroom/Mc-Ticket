@@ -24,13 +24,14 @@ public record TicketResponse(
     String source,
     boolean nlpProcessed,
     List<String> keywords,
+    int attachmentCount,
     OffsetDateTime openedAt,
     OffsetDateTime resolvedAt,
     OffsetDateTime closedAt,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt
 ) {
-    public static TicketResponse from(Ticket t, List<String> keywords) {
+    public static TicketResponse from(Ticket t, List<String> keywords, int attachmentCount) {
         return new TicketResponse(
             t.getId(),
             t.getTitle(),
@@ -46,6 +47,7 @@ public record TicketResponse(
             t.getSource(),
             t.getNlpProcessed(),
             keywords,
+            attachmentCount,
             t.getOpenedAt(),
             t.getResolvedAt(),
             t.getClosedAt(),
