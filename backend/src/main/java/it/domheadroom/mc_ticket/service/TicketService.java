@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.domheadroom.mc_ticket.dto.BulkImportResponse;
 import it.domheadroom.mc_ticket.dto.CategoryResponse;
 import it.domheadroom.mc_ticket.dto.CreateTicketRequest;
+import it.domheadroom.mc_ticket.dto.TicketFilter;
 import it.domheadroom.mc_ticket.dto.TicketResponse;
 import it.domheadroom.mc_ticket.entity.*;
 import it.domheadroom.mc_ticket.repository.*;
@@ -123,6 +124,30 @@ public class TicketService {
     @Transactional(readOnly = true)
     public Page<TicketResponse> getAllTickets(Pageable pageable) {
         var page = ticketRepository.findAll(pageable);
+        var tickets = page.getContent();
+        var ids = tickets.stream().map(Ticket::getId).toList();
+
+        var keywordsById = ticketKeywordRepository.findByIdTicketIdIn(ids).stream()
+            .collect(Collectors.groupingBy(
+                tk -> tk.getId().getTicketId(),
+                Collectors.mapping(tk -> tk.getKeyword().getTerm(), Collectors.toList())
+            ));
+
+        var attachmentCounts = attachmentRepository.findByTicketIdIn(ids).stream()
+            .collect(Collectors.groupingBy(
+                a -> a.getTicket().getId(),
+                Collectors.counting()
+            ));
+
+        return page.map(t -> TicketResponse.from(t,
+            keywordsById.getOrDefault(t.getId(), List.of()),
+            attachmentCounts.getOrDefault(t.getId(), 0L).intValue()));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TicketResponse> searchTickets(TicketFilter filter, Pageable pageable) {
+        var spec = TicketSpecifications.fromFilter(filter);
+        var page = ticketRepository.findAll(spec, pageable);
         var tickets = page.getContent();
         var ids = tickets.stream().map(Ticket::getId).toList();
 

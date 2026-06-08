@@ -3,6 +3,7 @@ package it.domheadroom.mc_ticket.controller;
 import it.domheadroom.mc_ticket.dto.BulkImportResponse;
 import it.domheadroom.mc_ticket.dto.CategoryResponse;
 import it.domheadroom.mc_ticket.dto.CreateTicketRequest;
+import it.domheadroom.mc_ticket.dto.TicketFilter;
 import it.domheadroom.mc_ticket.dto.TicketResponse;
 import it.domheadroom.mc_ticket.entity.User;
 import it.domheadroom.mc_ticket.service.TicketService;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,7 +66,19 @@ public class TicketController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/tickets")
     public ResponseEntity<Page<TicketResponse>> getAllTickets(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String categorySlug,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        var filter = new TicketFilter(search, status, categorySlug, priority, dateFrom, dateTo);
+        var hasFilters = search != null || status != null || categorySlug != null
+            || priority != null || dateFrom != null || dateTo != null;
+        if (hasFilters) {
+            return ResponseEntity.ok(ticketService.searchTickets(filter, pageable));
+        }
         return ResponseEntity.ok(ticketService.getAllTickets(pageable));
     }
 
