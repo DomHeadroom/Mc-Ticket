@@ -4,6 +4,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatPaginatorModule, PageEvent, MatPaginatorIntl } from '@angular/material/paginator';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
 import { TicketResponse, BASE_PATH } from '../../generated';
 
 interface PageResponse {
@@ -16,7 +21,11 @@ interface PageResponse {
 
 @Component({
   selector: 'app-ticket-list',
-  imports: [DatePipe, MatTableModule, MatCardModule, MatPaginatorModule],
+  imports: [
+    DatePipe, FormsModule,
+    MatTableModule, MatCardModule, MatPaginatorModule,
+    MatInputModule, MatSelectModule, MatFormFieldModule, MatButtonModule,
+  ],
   providers: [
     {
       provide: MatPaginatorIntl,
@@ -40,6 +49,80 @@ interface PageResponse {
       <mat-card>
         <mat-card-content>
           <h2 class="list-title">Lista Richieste</h2>
+
+          <div class="filter-bar">
+            <div class="filter-bar-group">
+              <mat-form-field appearance="outline" class="filter-search">
+                <input matInput [(ngModel)]="filterSearch" placeholder="Cerca..." (keyup.enter)="onFilter()" />
+              </mat-form-field>
+              <button mat-stroked-button [color]="showAdvanced() ? 'primary' : ''" (click)="showAdvanced.set(!showAdvanced())">
+                Ricerca Avanzata
+              </button>
+            </div>
+
+            @if (showAdvanced()) {
+              <div class="filter-advanced">
+                <div class="filter-advanced-fields">
+                  <mat-form-field appearance="outline" class="filter-select">
+                    <mat-label>Stato</mat-label>
+                    <mat-select [(ngModel)]="filterStatus">
+                      <mat-option value="">Tutti</mat-option>
+                      <mat-option value="open">Aperto</mat-option>
+                      <mat-option value="in_progress">In corso</mat-option>
+                      <mat-option value="pending_user">In attesa</mat-option>
+                      <mat-option value="resolved">Risolto</mat-option>
+                      <mat-option value="closed">Chiuso</mat-option>
+                      <mat-option value="rejected">Rifiutato</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="filter-select">
+                    <mat-label>Categoria</mat-label>
+                    <mat-select [(ngModel)]="filterCategory">
+                      <mat-option value="">Tutte</mat-option>
+                      <mat-option value="rete">Rete</mat-option>
+                      <mat-option value="database">Database</mat-option>
+                      <mat-option value="bug-applicativo">Bug Applicativo</mat-option>
+                      <mat-option value="configurazione">Configurazione</mat-option>
+                      <mat-option value="hardware">Hardware</mat-option>
+                      <mat-option value="servizi-web">Servizi Web</mat-option>
+                      <mat-option value="altro">Altro</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="filter-select">
+                    <mat-label>Priorità NLP</mat-label>
+                    <mat-select [(ngModel)]="filterPriority">
+                      <mat-option value="">Tutte</mat-option>
+                      <mat-option value="p1">Critica</mat-option>
+                      <mat-option value="p2">Alta</mat-option>
+                      <mat-option value="p3">Media</mat-option>
+                      <mat-option value="p4">Bassa</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="filter-advanced-fields">
+                  <mat-form-field appearance="outline" class="filter-date">
+                    <mat-label>Dal</mat-label>
+                    <input matInput type="date" [(ngModel)]="filterDateFrom" />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="filter-date">
+                    <mat-label>Al</mat-label>
+                    <input matInput type="date" [(ngModel)]="filterDateTo" />
+                  </mat-form-field>
+                </div>
+
+                <div class="filter-advanced-actions">
+                  <button mat-button (click)="onReset()">Cancella</button>
+                  <span class="filter-advanced-spacer"></span>
+                  <button mat-flat-button color="primary" (click)="onFilter()">Filtra</button>
+                </div>
+              </div>
+            }
+          </div>
+
           <table mat-table [dataSource]="tickets()" multiTemplateDataRows class="ticket-table">
             <ng-container matColumnDef="title">
               <th mat-header-cell *matHeaderCellDef>Titolo</th>
@@ -77,9 +160,9 @@ interface PageResponse {
                     <p><strong>Priorità (utente):</strong> {{ priorityLabel(t.urgencyReported) }}</p>
                     <p><strong>Priorità (NLP):</strong> {{ priorityComputedLabel(t.priorityComputed) }}</p>
                     <p><strong>Keywords:</strong> {{ (t.keywords ?? []).join(', ') || '-' }}</p>
-                    <p><strong>NLP:</strong> {{ t.nlpProcessed ? 'Si' : 'No' }}</p>
+                    <p><strong>NLP:</strong> {{ t.nlpProcessed ? 'Sì' : 'No' }}</p>
                     <p><strong>File allegati:</strong> {{ (t.attachmentCount ?? 0) > 0 ? t.attachmentCount + ' file' : 'Nessun file' }}</p>
-                    <p><strong>Apertura:</strong> {{ (t.openedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
+                    <p><strong>Creazione:</strong> {{ (t.openedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
                     <p><strong>Risoluzione:</strong> {{ (t.resolvedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
                     <p><strong>Chiusura:</strong> {{ (t.closedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
                   </div>
@@ -127,23 +210,55 @@ export class TicketList implements OnInit {
   protected readonly pageSize = signal(20);
   protected readonly columns = ['title', 'status', 'urgency', 'createdAt'];
   protected readonly expandedElement = signal<TicketResponse | null>(null);
+  protected readonly showAdvanced = signal(false);
+
+  protected filterSearch = '';
+  protected filterStatus = '';
+  protected filterCategory = '';
+  protected filterPriority = '';
+  protected filterDateFrom = '';
+  protected filterDateTo = '';
 
   ngOnInit() {
     this.loadTickets();
   }
 
   private loadTickets(): void {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('page', this.page())
       .set('size', this.pageSize());
+
+    if (this.filterSearch) params = params.set('search', this.filterSearch);
+    if (this.filterStatus) params = params.set('status', this.filterStatus);
+    if (this.filterCategory) params = params.set('categorySlug', this.filterCategory);
+    if (this.filterPriority) params = params.set('priority', this.filterPriority);
+    if (this.filterDateFrom) params = params.set('dateFrom', this.filterDateFrom);
+    if (this.filterDateTo) params = params.set('dateTo', this.filterDateTo);
 
     this.http.get<PageResponse>(`${this.basePath}/api/tickets`, { params }).subscribe({
       next: (res) => {
         this.tickets.set(res.content);
         this.totalElements.set(res.totalElements);
         this.totalPages.set(res.totalPages);
+        this.page.set(res.number);
       },
     });
+  }
+
+  protected onFilter(): void {
+    this.page.set(0);
+    this.loadTickets();
+  }
+
+  protected onReset(): void {
+    this.filterSearch = '';
+    this.filterStatus = '';
+    this.filterCategory = '';
+    this.filterPriority = '';
+    this.filterDateFrom = '';
+    this.filterDateTo = '';
+    this.page.set(0);
+    this.loadTickets();
   }
 
   protected toggleRow(row: TicketResponse): void {
