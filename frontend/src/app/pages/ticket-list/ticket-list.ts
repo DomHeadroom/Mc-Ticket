@@ -38,14 +38,15 @@ interface PageResponse {
   template: `
     <div class="container">
       <mat-card>
-        <mat-card-header>
-          <mat-card-title>Lista Richieste</mat-card-title>
-        </mat-card-header>
         <mat-card-content>
-          <table mat-table [dataSource]="tickets()" class="ticket-table">
+          <h2 class="list-title">Lista Richieste</h2>
+          <table mat-table [dataSource]="tickets()" multiTemplateDataRows class="ticket-table">
             <ng-container matColumnDef="title">
               <th mat-header-cell *matHeaderCellDef>Titolo</th>
-              <td mat-cell *matCellDef="let t">{{ t.title }}</td>
+              <td mat-cell *matCellDef="let t">
+                <span class="expand-icon" [class.open]="expandedElement()?.id === t.id">&#9654;</span>
+                {{ t.title }}
+              </td>
             </ng-container>
 
             <ng-container matColumnDef="status">
@@ -60,23 +61,40 @@ interface PageResponse {
               <td mat-cell *matCellDef="let t">{{ priorityLabel(t.urgencyReported) }}</td>
             </ng-container>
 
-            <ng-container matColumnDef="categoryAuto">
-              <th mat-header-cell *matHeaderCellDef>Categoria NLP</th>
-              <td mat-cell *matCellDef="let t">{{ categoryLabel(t.categoryAuto) }}</td>
-            </ng-container>
-
-            <ng-container matColumnDef="keywords">
-              <th mat-header-cell *matHeaderCellDef>Keywords</th>
-              <td mat-cell *matCellDef="let t">{{ (t.keywords ?? []).slice(0, 3).join(', ') }}</td>
-            </ng-container>
-
             <ng-container matColumnDef="createdAt">
               <th mat-header-cell *matHeaderCellDef>Creato il</th>
               <td mat-cell *matCellDef="let t">{{ t.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
             </ng-container>
 
+            <ng-container matColumnDef="expandedDetail">
+              <td mat-cell *matCellDef="let t" [attr.colspan]="columns.length">
+                @if (expandedElement()?.id === t.id) {
+                  <div class="detail-content">
+                    <p><strong>Descrizione:</strong> {{ t.description }}</p>
+                    <p><strong>Richiedente:</strong> {{ t.requesterName ?? '-' }} &lt;{{ t.requesterEmail ?? '-' }}&gt;</p>
+                    <p><strong>Categoria (utente):</strong> {{ categoryLabel(t.categoryUser) }}</p>
+                    <p><strong>Categoria (NLP):</strong> {{ categoryLabel(t.categoryAuto) }}</p>
+                    <p><strong>Priorità (utente):</strong> {{ priorityLabel(t.urgencyReported) }}</p>
+                    <p><strong>Priorità (NLP):</strong> {{ priorityComputedLabel(t.priorityComputed) }}</p>
+                    <p><strong>Keywords:</strong> {{ (t.keywords ?? []).join(', ') || '-' }}</p>
+                    <p><strong>NLP:</strong> {{ t.nlpProcessed ? 'Si' : 'No' }}</p>
+                    <p><strong>File allegati:</strong> {{ (t.attachmentCount ?? 0) > 0 ? t.attachmentCount + ' file' : 'Nessun file' }}</p>
+                    <p><strong>Apertura:</strong> {{ (t.openedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
+                    <p><strong>Risoluzione:</strong> {{ (t.resolvedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
+                    <p><strong>Chiusura:</strong> {{ (t.closedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
+                  </div>
+                }
+              </td>
+            </ng-container>
+
             <tr mat-header-row *matHeaderRowDef="columns"></tr>
-            <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns;"
+                class="clickable-row"
+                [class.expanded]="expandedElement()?.id === row.id"
+                (click)="toggleRow(row)"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['expandedDetail'];"
+                class="detail-row"
+                [class.visible]="expandedElement()?.id === row.id"></tr>
           </table>
 
           @if (tickets().length === 0) {
@@ -107,7 +125,8 @@ export class TicketList implements OnInit {
   protected readonly totalPages = signal(0);
   protected readonly page = signal(0);
   protected readonly pageSize = signal(20);
-  protected readonly columns = ['title', 'status', 'urgency', 'categoryAuto', 'keywords', 'createdAt'];
+  protected readonly columns = ['title', 'status', 'urgency', 'createdAt'];
+  protected readonly expandedElement = signal<TicketResponse | null>(null);
 
   ngOnInit() {
     this.loadTickets();
@@ -127,6 +146,12 @@ export class TicketList implements OnInit {
     });
   }
 
+  protected toggleRow(row: TicketResponse): void {
+    this.expandedElement.update(current =>
+      current?.id === row.id ? null : row,
+    );
+  }
+
   protected onPage(e: PageEvent): void {
     this.page.set(e.pageIndex);
     this.pageSize.set(e.pageSize);
@@ -141,6 +166,16 @@ export class TicketList implements OnInit {
       critical: 'Critica',
     };
     return labels[priority ?? ''] ?? priority ?? '';
+  }
+
+  protected priorityComputedLabel(priority: string | undefined): string {
+    const labels: Record<string, string> = {
+      p1: 'Critica',
+      p2: 'Alta',
+      p3: 'Media',
+      p4: 'Bassa',
+    };
+    return labels[priority ?? ''] ?? priority ?? '-';
   }
 
   protected categoryLabel(slug: string | undefined): string {

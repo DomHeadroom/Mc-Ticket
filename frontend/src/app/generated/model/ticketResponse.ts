@@ -24,6 +24,7 @@ export interface TicketResponse {
     source?: string;
     nlpProcessed?: boolean;
     keywords?: Array<string>;
+    attachmentCount?: number;
     openedAt?: string;
     resolvedAt?: string;
     closedAt?: string;
