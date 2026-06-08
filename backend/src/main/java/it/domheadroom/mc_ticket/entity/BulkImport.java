@@ -58,7 +58,7 @@ public class BulkImport {
 
     @Enumerated(EnumType.STRING)
     @ColumnDefault("'queued'")
-    @Column(name = "status", columnDefinition = "import_status not null")
+    @Column(name = "status", nullable = false, length = 50)
     private ImportStatus status;
 
     @JdbcTypeCode(SqlTypes.JSON)

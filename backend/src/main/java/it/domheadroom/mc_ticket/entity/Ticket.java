@@ -33,16 +33,16 @@ public class Ticket {
 
     @Enumerated(EnumType.STRING)
     @ColumnDefault("'open'")
-    @Column(name = "status", columnDefinition = "ticket_status not null")
+    @Column(name = "status", nullable = false, length = 50)
     private TicketStatus status;
 
     @Enumerated(EnumType.STRING)
     @ColumnDefault("'medium'")
-    @Column(name = "urgency_reported", columnDefinition = "urgency_level not null")
+    @Column(name = "urgency_reported", nullable = false, length = 50)
     private UrgencyLevel urgencyReported;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "priority_computed", columnDefinition = "priority_level")
+    @Column(name = "priority_computed", length = 50)
     private PriorityLevel priorityComputed;
 
     @ManyToOne(fetch = FetchType.LAZY)

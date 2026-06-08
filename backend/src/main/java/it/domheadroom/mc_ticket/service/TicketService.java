@@ -58,15 +58,19 @@ public class TicketService {
     }
 
     public TicketResponse createTicket(CreateTicketRequest req, User requester) {
-        return createTicket(req, requester, null);
+        return createTicket(req, requester, null, "manual");
     }
 
     public TicketResponse createTicket(CreateTicketRequest req, User requester, MultipartFile attachment) {
+        return createTicket(req, requester, attachment, "manual");
+    }
+
+    public TicketResponse createTicket(CreateTicketRequest req, User requester, MultipartFile attachment, String source) {
         var ticket = new Ticket();
         ticket.setTitle(req.title());
         ticket.setDescription(req.description());
         ticket.setRequester(requester);
-        ticket.setSource("manual");
+        ticket.setSource(source);
         ticket.setNlpProcessed(false);
 
         if (req.categorySlug() != null && !req.categorySlug().isBlank()) {
@@ -162,9 +166,10 @@ public class TicketService {
             int processed = 0;
             int failed = 0;
 
+            var source = "bulk_" + ext;
             for (var req : requests) {
                 try {
-                    createTicket(req, uploader);
+                    createTicket(req, uploader, null, source);
                     processed++;
                 } catch (Exception e) {
                     log.warn("Failed to import ticket row: {}", e.getMessage());

@@ -98,9 +98,9 @@ CREATE TABLE tickets (
     description             TEXT            NOT NULL,
 
     -- Classificazione
-    status                  ticket_status   NOT NULL DEFAULT 'open',
-    urgency_reported        urgency_level   NOT NULL DEFAULT 'medium',
-    priority_computed       priority_level,           -- valorizzata dal NLP engine
+    status                  VARCHAR(50)     NOT NULL DEFAULT 'open',
+    urgency_reported        VARCHAR(50)     NOT NULL DEFAULT 'medium',
+    priority_computed       VARCHAR(50),              -- valorizzata dal NLP engine
     category_id_user        INTEGER         REFERENCES categories(id) ON DELETE SET NULL,
     category_id_auto        INTEGER         REFERENCES categories(id) ON DELETE SET NULL,
 
@@ -141,7 +141,7 @@ CREATE TABLE ticket_nlp_analysis (
     model_version       VARCHAR(100)    NOT NULL,
     raw_output          JSONB,                          -- risposta grezza del modello
     suggested_category_id INTEGER       REFERENCES categories(id) ON DELETE SET NULL,
-    suggested_priority  priority_level,
+    suggested_priority  VARCHAR(50),
     confidence_score    NUMERIC(5,4)    CHECK (confidence_score BETWEEN 0 AND 1),
     language_detected   VARCHAR(10),
     processed_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
@@ -185,7 +185,7 @@ CREATE TABLE attachments (
     file_size_bytes BIGINT          NOT NULL CHECK (file_size_bytes > 0),
     mime_type       VARCHAR(100)    NOT NULL,
     storage_path    TEXT            NOT NULL,           -- path oggetto su object storage (S3/GCS/etc.)
-    source          attachment_source NOT NULL DEFAULT 'user_upload',
+    source          VARCHAR(50) NOT NULL DEFAULT 'user_upload',
     uploaded_by     UUID            REFERENCES users(id) ON DELETE SET NULL,
     uploaded_at     TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
 
@@ -210,7 +210,7 @@ CREATE TABLE bulk_imports (
     total_rows      INTEGER         NOT NULL DEFAULT 0 CHECK (total_rows >= 0),
     processed_rows  INTEGER         NOT NULL DEFAULT 0 CHECK (processed_rows >= 0),
     failed_rows     INTEGER         NOT NULL DEFAULT 0 CHECK (failed_rows >= 0),
-    status          import_status   NOT NULL DEFAULT 'queued',
+    status          VARCHAR(50)   NOT NULL DEFAULT 'queued',
     error_log       JSONB,
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     completed_at    TIMESTAMPTZ
@@ -228,8 +228,8 @@ ALTER TABLE tickets
 CREATE TABLE ticket_status_history (
     id              BIGSERIAL       PRIMARY KEY,
     ticket_id       UUID            NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
-    from_status     ticket_status,                     -- NULL se è lo stato iniziale
-    to_status       ticket_status   NOT NULL,
+    from_status     VARCHAR(50),                     -- NULL se è lo stato iniziale
+    to_status       VARCHAR(50)   NOT NULL,
     changed_by      UUID            REFERENCES users(id) ON DELETE SET NULL,
     changed_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     comment         TEXT

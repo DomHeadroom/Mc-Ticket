@@ -47,7 +47,7 @@ public class TicketNlpAnalysis {
     private Category suggestedCategory;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "suggested_priority", columnDefinition = "priority_level")
+    @Column(name = "suggested_priority", length = 50)
     private PriorityLevel suggestedPriority;
 
     @Column(name = "confidence_score", precision = 5, scale = 4)

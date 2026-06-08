@@ -44,19 +44,23 @@ public class NlpService {
 
     @Transactional
     public void analyze(Ticket ticket) {
-        var response = callNlp(ticket.getTitle(), ticket.getDescription());
+        try {
+            var response = callNlp(ticket.getTitle(), ticket.getDescription());
 
-        var category = resolveCategory(response.categorySlug());
-        var priority = resolvePriority(response.priority());
+            var category = resolveCategory(response.categorySlug());
+            var priority = resolvePriority(response.priority());
 
-        persistAnalysis(ticket, response, category, priority);
-        persistKeywords(ticket, response.keywords());
+            persistAnalysis(ticket, response, category, priority);
+            persistKeywords(ticket, response.keywords());
 
-        ticket.setNlpProcessed(true);
-        ticket.setNlpProcessedAt(OffsetDateTime.now());
-        ticket.setCategoryIdAuto(category);
-        ticket.setPriorityComputed(priority);
-        ticketRepository.save(ticket);
+            ticket.setNlpProcessed(true);
+            ticket.setNlpProcessedAt(OffsetDateTime.now());
+            ticket.setCategoryIdAuto(category);
+            ticket.setPriorityComputed(priority);
+            ticketRepository.save(ticket);
+        } catch (Exception e) {
+            log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
+        }
     }
 
     private NlpAnalysisResponse callNlp(String title, String description) {

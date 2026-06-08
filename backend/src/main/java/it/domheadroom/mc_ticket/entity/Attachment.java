@@ -48,7 +48,7 @@ public class Attachment {
 
     @Enumerated(EnumType.STRING)
     @ColumnDefault("'user_upload'")
-    @Column(name = "source", columnDefinition = "attachment_source not null")
+    @Column(name = "source", nullable = false, length = 50)
     private AttachmentSource source;
 
     @ManyToOne(fetch = FetchType.LAZY)

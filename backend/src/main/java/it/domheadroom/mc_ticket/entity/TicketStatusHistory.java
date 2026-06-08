@@ -27,11 +27,11 @@ public class TicketStatusHistory {
     private Ticket ticket;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "from_status", columnDefinition = "ticket_status")
+    @Column(name = "from_status", length = 50)
     private TicketStatus fromStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "to_status", columnDefinition = "ticket_status not null")
+    @Column(name = "to_status", nullable = false, length = 50)
     private TicketStatus toStatus;
 
     @ManyToOne(fetch = FetchType.LAZY)
