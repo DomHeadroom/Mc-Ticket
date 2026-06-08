@@ -16,9 +16,14 @@ import java.util.UUID;
 public class FileStorageService {
 
     private final Path uploadDir;
+    private final long maxFileSize;
 
-    public FileStorageService(@Value("${app.storage.upload-dir}") String uploadDir) {
+    public FileStorageService(
+            @Value("${app.storage.upload-dir}") String uploadDir,
+            @Value("${app.storage.max-file-size:10485760}") long maxFileSize
+    ) {
         this.uploadDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+        this.maxFileSize = maxFileSize;
     }
 
     @PostConstruct
@@ -27,22 +32,42 @@ public class FileStorageService {
     }
 
     public String store(MultipartFile file) throws IOException {
+        if (file.getSize() > maxFileSize) {
+            throw new IllegalArgumentException(
+                    "File exceeds maximum allowed size of " + maxFileSize + " bytes"
+            );
+        }
+
         var originalName = file.getOriginalFilename();
         var ext = "";
         if (originalName != null && originalName.contains(".")) {
             ext = originalName.substring(originalName.lastIndexOf("."));
+            ext = ext.replaceAll("[^a-zA-Z0-9._-]", "");
         }
         var storedName = UUID.randomUUID() + ext;
-        var target = uploadDir.resolve(storedName);
+        var target = uploadDir.resolve(storedName).normalize();
+
+        if (!target.startsWith(uploadDir)) {
+            throw new IOException("Path traversal detected");
+        }
+
         Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
         return storedName;
     }
 
     public Path load(String storedName) {
-        return uploadDir.resolve(storedName);
+        var target = uploadDir.resolve(storedName).normalize();
+        if (!target.startsWith(uploadDir)) {
+            throw new IllegalArgumentException("Path traversal detected");
+        }
+        return target;
     }
 
     public void delete(String storedName) throws IOException {
-        Files.deleteIfExists(uploadDir.resolve(storedName));
+        var target = uploadDir.resolve(storedName).normalize();
+        if (!target.startsWith(uploadDir)) {
+            throw new IllegalArgumentException("Path traversal detected");
+        }
+        Files.deleteIfExists(target);
     }
 }
