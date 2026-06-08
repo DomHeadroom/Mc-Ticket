@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -40,6 +41,7 @@ public class TicketService {
     private final FileStorageService fileStorageService;
     private final NlpService nlpService;
     private final ObjectMapper objectMapper;
+    private final TicketKeywordRepository ticketKeywordRepository;
 
     public TicketService(TicketRepository ticketRepository,
                          CategoryRepository categoryRepository,
@@ -47,7 +49,8 @@ public class TicketService {
                          BulkImportRepository bulkImportRepository,
                          FileStorageService fileStorageService,
                          NlpService nlpService,
-                         ObjectMapper objectMapper) {
+                         ObjectMapper objectMapper,
+                         TicketKeywordRepository ticketKeywordRepository) {
         this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
         this.attachmentRepository = attachmentRepository;
@@ -55,6 +58,7 @@ public class TicketService {
         this.fileStorageService = fileStorageService;
         this.nlpService = nlpService;
         this.objectMapper = objectMapper;
+        this.ticketKeywordRepository = ticketKeywordRepository;
     }
 
     public TicketResponse createTicket(CreateTicketRequest req, User requester) {
@@ -113,17 +117,29 @@ public class TicketService {
             log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
         }
 
-        return TicketResponse.from(ticket);
+        return TicketResponse.from(ticket, List.of());
     }
 
     @Transactional(readOnly = true)
     public Page<TicketResponse> getAllTickets(Pageable pageable) {
-        return ticketRepository.findAll(pageable).map(TicketResponse::from);
+        var page = ticketRepository.findAll(pageable);
+        var tickets = page.getContent();
+        var ids = tickets.stream().map(Ticket::getId).toList();
+        var keywordsById = ticketKeywordRepository.findByIdTicketIdIn(ids).stream()
+            .collect(Collectors.groupingBy(
+                tk -> tk.getId().getTicketId(),
+                Collectors.mapping(tk -> tk.getKeyword().getTerm(), Collectors.toList())
+            ));
+        return page.map(t -> TicketResponse.from(t, keywordsById.getOrDefault(t.getId(), List.of())));
     }
 
     @Transactional(readOnly = true)
     public Optional<TicketResponse> getTicket(UUID id) {
-        return ticketRepository.findById(id).map(TicketResponse::from);
+        return ticketRepository.findById(id)
+                .map(t -> TicketResponse.from(t,
+                    ticketKeywordRepository.findByIdTicketIdOrderByRelevanceScoreDesc(id).stream()
+                        .map(tk -> tk.getKeyword().getTerm())
+                        .toList()));
     }
 
     @Transactional(readOnly = true)
