@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Optional
 
-from analyzer import analyze, retrain, CATEGORIES, PRIORITIES
+from analyzer import analyze, CATEGORIES, PRIORITIES
 
 app = FastAPI(title="McTicket NLP Service")
 
@@ -12,15 +12,6 @@ class Ticket(BaseModel):
     description: str
     category_hint: Optional[str] = None
     urgency_hint: Optional[str] = None
-
-
-class TrainingExample(BaseModel):
-    text: str
-    category: str
-
-
-class TrainRequest(BaseModel):
-    examples: List[TrainingExample]
 
 
 class AnalyzeResponse(BaseModel):
@@ -43,18 +34,6 @@ def analyze_ticket(ticket: Ticket):
 @app.post("/analyze-batch", response_model=List[AnalyzeResponse])
 def analyze_batch(tickets: List[Ticket]):
     return [analyze(t.title, t.description) for t in tickets]
-
-
-@app.post("/train")
-def train_model(req: TrainRequest):
-    for ex in req.examples:
-        if ex.category not in CATEGORIES:
-            return {
-                "error": f"Invalid category '{ex.category}'. Must be one of {CATEGORIES}"
-            }
-    data = [(ex.text, ex.category) for ex in req.examples]
-    retrain(data)
-    return {"status": "ok", "trained_examples": len(data)}
 
 
 @app.get("/categories")

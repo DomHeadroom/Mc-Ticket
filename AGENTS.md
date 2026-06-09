@@ -6,7 +6,7 @@ Multi-service helpdesk ticket system. Docker Compose at root.
 |---------|-------|------|------------|
 | `backend` | Spring Boot 4.0.6 / Java 25 / Maven 3.9.16 | `8080` | `McTicketApplication.java` |
 | `frontend` | Angular 21.2 / standalone / Material / Vitest | `80` (nginx) | `src/main.ts` |
-| `nlp` | FastAPI / Python 3.14 / scikit-learn + YAKE | `8000` | `main.py` |
+| `nlp` | FastAPI / Python 3.13 / scikit-learn + YAKE | `8000` | `main.py` |
 | `db` | PostgreSQL 18 Alpine | `5432` | — |
 
 ## Agent runs in Docker, not on host
@@ -45,7 +45,6 @@ Real NLP (not a stub). Auto-trains at startup on 55 seed examples.
 |---|---|
 | `POST /analyze` | Extract keywords + classify category + estimate priority |
 | `POST /analyze-batch` | Same, for bulk tickets |
-| `POST /train` | Add labeled examples and retrain the classifier |
 | `GET /categories` | List supported categories |
 | `GET /priorities` | List priority levels |
 | `GET /health` | Health check |
