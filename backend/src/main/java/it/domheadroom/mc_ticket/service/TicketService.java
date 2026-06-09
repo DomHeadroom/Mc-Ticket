@@ -182,7 +182,7 @@ public class TicketService {
     public Optional<TicketResponse> getTicket(UUID id) {
         return ticketRepository.findById(id)
                 .map(t -> TicketResponse.from(t,
-                    ticketKeywordRepository.findByIdTicketIdOrderByRelevanceScoreDesc(id).stream()
+                    ticketKeywordRepository.findByIdTicketId(id).stream()
                         .map(tk -> tk.getKeyword().getTerm())
                         .toList(),
                     attachmentRepository.countByTicketId(id)));

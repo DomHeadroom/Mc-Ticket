@@ -12,7 +12,7 @@ public interface TicketKeywordRepository extends JpaRepository<TicketKeyword, Ti
 
     void deleteByTicketId(UUID ticketId);
 
-    List<TicketKeyword> findByIdTicketIdOrderByRelevanceScoreDesc(UUID ticketId);
+    List<TicketKeyword> findByIdTicketId(UUID ticketId);
 
     List<TicketKeyword> findByIdTicketIdIn(Collection<UUID> ticketIds);
 }
