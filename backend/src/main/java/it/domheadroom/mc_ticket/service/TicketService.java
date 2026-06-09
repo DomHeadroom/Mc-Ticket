@@ -191,8 +191,7 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public List<CategoryResponse> getActiveCategories() {
-        return categoryRepository.findAll().stream()
-                .filter(c -> Boolean.TRUE.equals(c.getIsActive()))
+        return categoryRepository.findByIsActiveTrue().stream()
                 .map(CategoryResponse::from)
                 .toList();
     }
