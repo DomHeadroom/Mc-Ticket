@@ -20,7 +20,6 @@ public class NlpService {
     private static final Logger log = LoggerFactory.getLogger(NlpService.class);
 
     private final RestClient restClient;
-    private final TicketRepository ticketRepository;
     private final CategoryRepository categoryRepository;
     private final KeywordRepository keywordRepository;
     private final TicketKeywordRepository ticketKeywordRepository;
@@ -28,14 +27,12 @@ public class NlpService {
 
     public NlpService(
             @Value("${app.nlp.base-url}") String nlpBaseUrl,
-            TicketRepository ticketRepository,
             CategoryRepository categoryRepository,
             KeywordRepository keywordRepository,
             TicketKeywordRepository ticketKeywordRepository,
             TicketNlpAnalysisRepository ticketNlpAnalysisRepository
     ) {
         this.restClient = RestClient.create(nlpBaseUrl);
-        this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
         this.keywordRepository = keywordRepository;
         this.ticketKeywordRepository = ticketKeywordRepository;
@@ -57,7 +54,6 @@ public class NlpService {
             ticket.setNlpProcessedAt(OffsetDateTime.now());
             ticket.setCategoryIdAuto(category);
             ticket.setPriorityComputed(priority);
-            ticketRepository.save(ticket);
         } catch (Exception e) {
             log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
         }

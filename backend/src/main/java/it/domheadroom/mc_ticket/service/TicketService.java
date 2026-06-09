@@ -79,6 +79,7 @@ public class TicketService {
 
         try {
             nlpService.analyze(ticket);
+            transactionTemplate.execute(status -> ticketRepository.save(ticket));
         } catch (Exception e) {
             log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
         }
