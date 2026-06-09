@@ -19,6 +19,7 @@
 .list-title {
   text-align: center;
   margin: 0 0 16px;
+  padding: 8px 16px;
   font-size: 24px;
   font-weight: 500;
 }
@@ -55,6 +56,26 @@
 .filter-search ::ng-deep .mat-mdc-form-field-subscript-wrapper {
   display: none;
 }
+.filter-search ::ng-deep .mat-mdc-form-field-icon-suffix {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+.filter-search ::ng-deep .mat-mdc-icon-button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+.filter-search ::ng-deep .mat-mdc-icon-button .mat-icon {
+  font-size: 18px;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+}
 
 .filter-bar .mat-mdc-stroked-button {
   height: 40px;
@@ -67,6 +88,8 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  max-width: 800px;
+  margin: 12px auto 0;
 }
 
 .filter-advanced-fields {
@@ -78,19 +101,22 @@
 
 .filter-advanced-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  justify-content: center;
 }
 
-.filter-advanced-spacer {
-  flex: 1;
+.filter-advanced-actions .reset-button {
+  color: #d32f2f;
 }
 
 .filter-select {
-  width: 160px;
+  flex: 1;
+  min-width: 140px;
 }
 
 .filter-date {
-  width: 180px;
+  flex: 1;
+  min-width: 160px;
 }
 
 .ticket-table {

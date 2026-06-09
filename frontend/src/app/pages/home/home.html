@@ -73,7 +73,7 @@
     </mat-card-content>
 
     <mat-card-actions>
-      <button type="button" class="reset-link" (click)="onReset()">Annulla modifiche</button>
+      <button type="button" mat-button color="warn" (click)="onReset()">Cancella</button>
       <span class="actions-spacer"></span>
       <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || submitting()">
         @if (submitting()) {

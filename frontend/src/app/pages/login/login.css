@@ -21,8 +21,8 @@ mat-card {
 }
 
 .logo img {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: auto;
 }
 
 .title {
@@ -52,4 +52,21 @@ button[mat-flat-button] {
   margin-bottom: 16px;
   font-size: 0.875rem;
   text-align: center;
+}
+
+mat-form-field ::ng-deep .mat-mdc-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+mat-form-field ::ng-deep .mat-mdc-icon-button .mat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 24px;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
 }

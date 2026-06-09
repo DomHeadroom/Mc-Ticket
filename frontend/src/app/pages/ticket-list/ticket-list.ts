@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { TicketResponse, BASE_PATH } from '../../generated';
 
@@ -24,7 +25,7 @@ interface PageResponse {
   imports: [
     DatePipe, FormsModule,
     MatTableModule, MatCardModule, MatPaginatorModule,
-    MatInputModule, MatSelectModule, MatFormFieldModule, MatButtonModule,
+    MatInputModule, MatSelectModule, MatFormFieldModule, MatButtonModule, MatIconModule,
   ],
   providers: [
     {
@@ -54,6 +55,11 @@ interface PageResponse {
             <div class="filter-bar-group">
               <mat-form-field appearance="outline" class="filter-search">
                 <input matInput [(ngModel)]="filterSearch" placeholder="Cerca..." (keyup.enter)="onFilter()" />
+                @if (filterSearch) {
+                  <button matSuffix mat-icon-button aria-label="Cancella ricerca" (click)="filterSearch = ''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
               </mat-form-field>
               <button mat-stroked-button [color]="showAdvanced() ? 'primary' : ''" (click)="showAdvanced.set(!showAdvanced())">
                 Ricerca Avanzata
@@ -115,9 +121,8 @@ interface PageResponse {
                 </div>
 
                 <div class="filter-advanced-actions">
-                  <button mat-button (click)="onReset()">Cancella</button>
-                  <span class="filter-advanced-spacer"></span>
                   <button mat-flat-button color="primary" (click)="onFilter()">Filtra</button>
+                  <button mat-button class="reset-button" (click)="onReset()">Cancella</button>
                 </div>
               </div>
             }
@@ -140,7 +145,7 @@ interface PageResponse {
             </ng-container>
 
             <ng-container matColumnDef="urgency">
-              <th mat-header-cell *matHeaderCellDef>Priorità</th>
+              <th mat-header-cell *matHeaderCellDef>Priorità (utente)</th>
               <td mat-cell *matCellDef="let t">{{ priorityLabel(t.urgencyReported) }}</td>
             </ng-container>
 
