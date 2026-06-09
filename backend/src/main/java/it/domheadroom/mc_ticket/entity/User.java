@@ -1,11 +1,15 @@
 package it.domheadroom.mc_ticket.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users", schema = "helpdesk")
+@Getter
+@Setter
 public class User {
 
     @Id
@@ -53,12 +57,4 @@ public class User {
         updatedAt = OffsetDateTime.now();
     }
 
-    public UUID getId() { return id; }
-    public String getEmail() { return email; }
-    public String getPasswordHash() { return passwordHash; }
-    public String getFullName() { return fullName; }
-    public String getRole() { return role; }
-    public Boolean getIsActive() { return isActive; }
-    public OffsetDateTime getCreatedAt() { return createdAt; }
-    public OffsetDateTime getUpdatedAt() { return updatedAt; }
 }

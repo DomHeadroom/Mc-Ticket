@@ -11,13 +11,15 @@ import it.domheadroom.mc_ticket.entity.*;
 import it.domheadroom.mc_ticket.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -30,7 +32,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
 public class TicketService {
 
     private static final Logger log = LoggerFactory.getLogger(TicketService.class);
@@ -43,6 +44,7 @@ public class TicketService {
     private final NlpService nlpService;
     private final ObjectMapper objectMapper;
     private final TicketKeywordRepository ticketKeywordRepository;
+    private final TransactionTemplate transactionTemplate;
 
     public TicketService(TicketRepository ticketRepository,
                          CategoryRepository categoryRepository,
@@ -51,7 +53,8 @@ public class TicketService {
                          FileStorageService fileStorageService,
                          NlpService nlpService,
                          ObjectMapper objectMapper,
-                         TicketKeywordRepository ticketKeywordRepository) {
+                         TicketKeywordRepository ticketKeywordRepository,
+                         TransactionTemplate transactionTemplate) {
         this.ticketRepository = ticketRepository;
         this.categoryRepository = categoryRepository;
         this.attachmentRepository = attachmentRepository;
@@ -60,6 +63,7 @@ public class TicketService {
         this.nlpService = nlpService;
         this.objectMapper = objectMapper;
         this.ticketKeywordRepository = ticketKeywordRepository;
+        this.transactionTemplate = transactionTemplate;
     }
 
     public TicketResponse createTicket(CreateTicketRequest req, User requester) {
@@ -71,6 +75,18 @@ public class TicketService {
     }
 
     public TicketResponse createTicket(CreateTicketRequest req, User requester, MultipartFile attachment, String source) {
+        var ticket = transactionTemplate.execute(status -> persistTicket(req, requester, attachment, source));
+
+        try {
+            nlpService.analyze(ticket);
+        } catch (Exception e) {
+            log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
+        }
+
+        return TicketResponse.from(ticket, List.of(), 0);
+    }
+
+    private Ticket persistTicket(CreateTicketRequest req, User requester, MultipartFile attachment, String source) {
         var ticket = new Ticket();
         ticket.setTitle(req.title());
         ticket.setDescription(req.description());
@@ -112,13 +128,7 @@ public class TicketService {
             saveAttachment(ticket, attachment, requester, AttachmentSource.user_upload);
         }
 
-        try {
-            nlpService.analyze(ticket);
-        } catch (Exception e) {
-            log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
-        }
-
-        return TicketResponse.from(ticket, List.of(), 0);
+        return ticket;
     }
 
     @Transactional(readOnly = true)
@@ -274,29 +284,15 @@ public class TicketService {
 
     private List<CreateTicketRequest> parseCsv(MultipartFile file) throws Exception {
         var requests = new ArrayList<CreateTicketRequest>();
-        try (var reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            var headerLine = reader.readLine();
-            if (headerLine == null) return requests;
-
-            var headers = headerLine.split(",");
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) continue;
-                var values = line.split(",");
-                var map = new java.util.HashMap<String, String>();
-                for (int i = 0; i < headers.length && i < values.length; i++) {
-                    var val = values[i].trim();
-                    if (val.startsWith("\"") && val.endsWith("\"") && val.length() >= 2) {
-                        val = val.substring(1, val.length() - 1);
-                    }
-                    map.put(headers[i].trim(), val);
-                }
+        try (var reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+             var parser = CSVParser.parse(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
+            for (var record : parser) {
                 requests.add(new CreateTicketRequest(
-                        map.getOrDefault("title", ""),
-                        map.getOrDefault("description", ""),
-                        map.get("categorySlug"),
-                        map.get("urgencyReported"),
-                        map.get("openedAt")
+                        record.get("title"),
+                        record.get("description"),
+                        record.get("categorySlug"),
+                        record.get("urgencyReported"),
+                        record.get("openedAt")
                 ));
             }
         }
