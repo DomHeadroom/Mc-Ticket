@@ -76,9 +76,6 @@
       <button type="button" mat-button color="warn" (click)="onReset()">Cancella</button>
       <span class="actions-spacer"></span>
       <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="form.invalid || submitting()">
-        @if (submitting()) {
-          <mat-progress-bar mode="indeterminate" class="btn-progress"></mat-progress-bar>
-        }
         Crea Ticket
       </button>
     </mat-card-actions>
@@ -101,6 +98,7 @@
         <button type="button" mat-stroked-button (click)="bulkFileInput.click()">
           <mat-icon>upload_file</mat-icon> Scegli file
         </button>
+        <span class="file-hint">.csv, .json</span>
         @if (selectedBulkFile(); as file) {
           <mat-chip-set>
             <mat-chip highlighted color="primary" (removed)="selectedBulkFile.set(null)">
@@ -111,15 +109,11 @@
             </mat-chip>
           </mat-chip-set>
         }
-        <span class="file-hint">.csv, .json</span>
       </div>
     </mat-card-content>
 
     <mat-card-actions align="end">
-      <button mat-raised-button color="accent" (click)="onSubmitBulk()" [disabled]="!selectedBulkFile() || bulkSubmitting()">
-        @if (bulkSubmitting()) {
-          <mat-progress-bar mode="indeterminate" class="btn-progress"></mat-progress-bar>
-        }
+      <button mat-raised-button color="primary" (click)="onSubmitBulk()" [disabled]="!selectedBulkFile() || bulkSubmitting()">
         Importa
       </button>
     </mat-card-actions>

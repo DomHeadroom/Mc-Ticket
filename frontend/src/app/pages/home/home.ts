@@ -8,7 +8,6 @@ import { MatButtonModule } from '@angular/material/button';
 
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TicketControllerService, CategoryResponse } from '../../generated';
 
@@ -24,7 +23,6 @@ import { TicketControllerService, CategoryResponse } from '../../generated';
 
     MatChipsModule,
     MatIconModule,
-    MatProgressBarModule,
     MatSnackBarModule,
   ],
   templateUrl: './home.html',

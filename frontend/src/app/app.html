@@ -4,7 +4,7 @@
     <a routerLink="/" class="logo-link">
       <img ngSrc="assets/logo.png" alt="McTicket" class="toolbar-logo" height="40" width="51" priority />
     </a>
-    <button mat-button routerLink="/" class="nav-link">
+    <button mat-button routerLink="/" class="nav-link" matTooltip="Crea Ticket">
       Home
     </button>
     @if (state?.role === 'admin') {

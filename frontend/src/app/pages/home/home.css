@@ -80,14 +80,6 @@
   font-size: 12px;
 }
 
-.btn-progress {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-radius: 0 0 4px 4px;
-}
-
 mat-card-actions {
   display: flex;
   align-items: center;
