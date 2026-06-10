@@ -1,41 +1,63 @@
 package it.domheadroom.mc_ticket.service;
 
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.InputStream;
 import java.util.UUID;
 
 @Service
 public class FileStorageService {
 
-    private final Path uploadDir;
+    private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
+
+    private final S3Client s3Client;
+    private final String bucket;
     private final long maxFileSize;
 
     public FileStorageService(
-            @Value("${app.storage.upload-dir}") String uploadDir,
-            @Value("${app.storage.max-file-size:10485760}") long maxFileSize
-    ) {
-        this.uploadDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            S3Client s3Client,
+            @Value("${app.storage.s3.bucket}") String bucket,
+            @Value("${app.storage.max-file-size:10485760}") long maxFileSize) {
+        this.s3Client = s3Client;
+        this.bucket = bucket;
         this.maxFileSize = maxFileSize;
     }
 
     @PostConstruct
-    public void init() throws IOException {
-        Files.createDirectories(uploadDir);
+    public void init() {
+        for (int i = 1; i <= 10; i++) {
+            try {
+                s3Client.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
+                log.info("Created S3 bucket: {}", bucket);
+                return;
+            } catch (BucketAlreadyExistsException | BucketAlreadyOwnedByYouException e) {
+                log.info("Bucket {} already exists", bucket);
+                return;
+            } catch (Exception e) {
+                if (i < 10) {
+                    log.warn("S3 not ready yet (attempt {}/10), retrying in 2s...", i);
+                    try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+                } else {
+                    log.error("S3 not available after 10 attempts", e);
+                    throw new RuntimeException("S3 not available: " + e.getMessage(), e);
+                }
+            }
+        }
     }
 
     public String store(MultipartFile file) throws IOException {
         if (file.getSize() > maxFileSize) {
             throw new IllegalArgumentException(
-                    "File exceeds maximum allowed size of " + maxFileSize + " bytes"
-            );
+                    "File exceeds maximum allowed size of " + maxFileSize + " bytes");
         }
 
         var originalName = file.getOriginalFilename();
@@ -44,30 +66,33 @@ public class FileStorageService {
             ext = originalName.substring(originalName.lastIndexOf("."));
             ext = ext.replaceAll("[^a-zA-Z0-9._-]", "");
         }
-        var storedName = UUID.randomUUID() + ext;
-        var target = uploadDir.resolve(storedName).normalize();
+        var objectKey = UUID.randomUUID() + ext;
 
-        if (!target.startsWith(uploadDir)) {
-            throw new IOException("Path traversal detected");
-        }
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(objectKey)
+                        .contentType(file.getContentType())
+                        .contentLength(file.getSize())
+                        .build(),
+                RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-        Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-        return storedName;
+        return objectKey;
     }
 
-    public Path load(String storedName) {
-        var target = uploadDir.resolve(storedName).normalize();
-        if (!target.startsWith(uploadDir)) {
-            throw new IllegalArgumentException("Path traversal detected");
-        }
-        return target;
+    public InputStream load(String objectKey) {
+        return s3Client.getObject(
+                GetObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(objectKey)
+                        .build());
     }
 
-    public void delete(String storedName) throws IOException {
-        var target = uploadDir.resolve(storedName).normalize();
-        if (!target.startsWith(uploadDir)) {
-            throw new IllegalArgumentException("Path traversal detected");
-        }
-        Files.deleteIfExists(target);
+    public void delete(String objectKey) {
+        s3Client.deleteObject(
+                DeleteObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(objectKey)
+                        .build());
     }
 }

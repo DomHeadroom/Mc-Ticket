@@ -8,6 +8,10 @@ Multi-service helpdesk ticket system. Docker Compose at root.
 | `frontend` | Angular 21.2 / standalone / Material / Vitest | `80` (nginx) | `src/main.ts` |
 | `nlp` | FastAPI / Python 3.13 / scikit-learn + YAKE | `8000` | `main.py` |
 | `db` | PostgreSQL 18 Alpine | `5432` | — |
+| `seaweedfs-master` | SeaweedFS (Go) | `9333` | `weed master` |
+| `seaweedfs-volume` | SeaweedFS (Go) | `8080` | `weed volume` |
+| `seaweedfs-filer` | SeaweedFS (Go) | `8888` | `weed filer` |
+| `seaweedfs-s3` | SeaweedFS (Go) | `8333` | `weed s3` (S3 API gateway) |
 
 ## Agent runs in Docker, not on host
 
@@ -18,7 +22,9 @@ All commands (`mvn`, `ng`, `python`, `pip`, `node`) execute **inside the agent c
 - **Package**: `it.domheadroom.mc_ticket`
 - **Build**: `./mvnw package -DskipTests` (multi-stage Docker, tests skipped during build)
 - **Test**: `./mvnw test` (runs in agent container only if Maven/mvnw available; otherwise `docker compose build backend` to verify compilation)
-- **Env vars** (from `.env`): `POSTGRES_USER`, `POSTGRES_PASSWORD`, `JWT_SECRET`, `SPRING_DATASOURCE_URL`, `NLP_BASE_URL`, `UPLOAD_DIR`
+- **Env vars** (from `.env`): `POSTGRES_USER`, `POSTGRES_PASSWORD`, `JWT_SECRET`, `SPRING_DATASOURCE_URL`, `NLP_BASE_URL`, `SEAWEEDFS_ACCESS_KEY`, `SEAWEEDFS_SECRET_KEY`, `APP_S3_ENDPOINT`
+- **Object storage**: SeaweedFS (master + volume + filer + s3 gateway) replaces local Docker volume for uploads
+- **File download**: `GET /api/attachments/{id}` streams from S3
 - **JPA**: `ddl-auto=validate` — schema DDL must be pre-applied (see `helpdesk_schema.sql`)
 - **DB schema**: `helpdesk`; extensions required: `pgcrypto`, `pg_trgm`, `btree_gin`
 - **Seeded categories** (7): `rete`, `database`, `bug-applicativo`, `configurazione`, `hardware`, `servizi-web`, `altro`
