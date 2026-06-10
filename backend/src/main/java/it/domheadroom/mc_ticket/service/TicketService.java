@@ -2,6 +2,7 @@ package it.domheadroom.mc_ticket.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.domheadroom.mc_ticket.dto.AttachmentResponse;
 import it.domheadroom.mc_ticket.dto.BulkImportResponse;
 import it.domheadroom.mc_ticket.dto.CategoryResponse;
 import it.domheadroom.mc_ticket.dto.CreateTicketRequest;
@@ -84,7 +85,7 @@ public class TicketService {
             log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
         }
 
-        return TicketResponse.from(ticket, List.of(), 0);
+        return TicketResponse.from(ticket, List.of(), List.of());
     }
 
     private Ticket persistTicket(CreateTicketRequest req, User requester, MultipartFile attachment, String source) {
@@ -144,15 +145,15 @@ public class TicketService {
                 Collectors.mapping(tk -> tk.getKeyword().getTerm(), Collectors.toList())
             ));
 
-        var attachmentCounts = attachmentRepository.findByTicketIdIn(ids).stream()
+        var attachmentsById = attachmentRepository.findByTicketIdIn(ids).stream()
             .collect(Collectors.groupingBy(
                 a -> a.getTicket().getId(),
-                Collectors.counting()
+                Collectors.mapping(AttachmentResponse::from, Collectors.toList())
             ));
 
         return page.map(t -> TicketResponse.from(t,
             keywordsById.getOrDefault(t.getId(), List.of()),
-            attachmentCounts.getOrDefault(t.getId(), 0L).intValue()));
+            attachmentsById.getOrDefault(t.getId(), List.of())));
     }
 
     @Transactional(readOnly = true)
@@ -168,15 +169,15 @@ public class TicketService {
                 Collectors.mapping(tk -> tk.getKeyword().getTerm(), Collectors.toList())
             ));
 
-        var attachmentCounts = attachmentRepository.findByTicketIdIn(ids).stream()
+        var attachmentsById = attachmentRepository.findByTicketIdIn(ids).stream()
             .collect(Collectors.groupingBy(
                 a -> a.getTicket().getId(),
-                Collectors.counting()
+                Collectors.mapping(AttachmentResponse::from, Collectors.toList())
             ));
 
         return page.map(t -> TicketResponse.from(t,
             keywordsById.getOrDefault(t.getId(), List.of()),
-            attachmentCounts.getOrDefault(t.getId(), 0L).intValue()));
+            attachmentsById.getOrDefault(t.getId(), List.of())));
     }
 
     @Transactional(readOnly = true)
@@ -186,7 +187,9 @@ public class TicketService {
                     ticketKeywordRepository.findByIdTicketId(id).stream()
                         .map(tk -> tk.getKeyword().getTerm())
                         .toList(),
-                    attachmentRepository.countByTicketId(id)));
+                    attachmentRepository.findByTicketIdIn(List.of(id)).stream()
+                        .map(AttachmentResponse::from)
+                        .toList()));
     }
 
     @Transactional(readOnly = true)
