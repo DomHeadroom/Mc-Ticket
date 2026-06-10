@@ -9,6 +9,8 @@
  */
 
 
+import { AttachmentResponse } from './attachmentResponse';
+
 export interface TicketResponse { 
     id?: string;
     title?: string;
@@ -24,7 +26,7 @@ export interface TicketResponse {
     source?: string;
     nlpProcessed?: boolean;
     keywords?: Array<string>;
-    attachmentCount?: number;
+    attachments?: Array<AttachmentResponse>;
     openedAt?: string;
     resolvedAt?: string;
     closedAt?: string;

@@ -56,6 +56,7 @@
           <button type="button" mat-stroked-button (click)="attachmentInput.click()">
             <mat-icon>attach_file</mat-icon> Allega file
           </button>
+          <span class="file-hint">.txt, .log, .json, .csv</span>
           @if (selectedFile(); as file) {
             <mat-chip-set>
               <mat-chip highlighted color="primary" (removed)="selectedFile.set(null)">
@@ -66,7 +67,6 @@
               </mat-chip>
             </mat-chip-set>
           }
-          <span class="file-hint">.txt, .log, .json, .csv</span>
         </div>
 
       </form>

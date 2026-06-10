@@ -192,3 +192,26 @@
 .status-resolved { background: #e8f5e9; color: #2e7d32; }
 .status-closed { background: #eceff1; color: #546e7a; }
 .status-rejected { background: #ffebee; color: #c62828; }
+
+.attachment-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #1565c0;
+  text-decoration: none;
+  font-size: 13px;
+}
+.attachment-link:hover {
+  text-decoration: underline;
+}
+.attachment-link .mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+}

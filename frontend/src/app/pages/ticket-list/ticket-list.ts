@@ -10,7 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
-import { TicketResponse, BASE_PATH } from '../../generated';
+import { TicketResponse, AttachmentResponse, BASE_PATH } from '../../generated';
 
 interface PageResponse {
   content: TicketResponse[];
@@ -166,7 +166,19 @@ interface PageResponse {
                     <p><strong>Priorità (NLP):</strong> {{ priorityComputedLabel(t.priorityComputed) }}</p>
                     <p><strong>Keywords:</strong> {{ (t.keywords ?? []).join(', ') || '-' }}</p>
                     <p><strong>NLP:</strong> {{ t.nlpProcessed ? 'Sì' : 'No' }}</p>
-                    <p><strong>File allegati:</strong> {{ (t.attachmentCount ?? 0) > 0 ? t.attachmentCount + ' file' : 'Nessun file' }}</p>
+                    <p><strong>File allegati:</strong>
+                      @if ((t.attachments ?? []).length > 0) {
+                        <span class="attachment-list">
+                          @for (a of t.attachments ?? []; track a.id) {
+                            <a [href]="attachmentUrl(a)" class="attachment-link" target="_blank">
+                              <mat-icon>attach_file</mat-icon> {{ a.fileName }}
+                            </a>
+                          }
+                        </span>
+                      } @else {
+                        Nessun file
+                      }
+                    </p>
                     <p><strong>Creazione:</strong> {{ (t.openedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
                     <p><strong>Risoluzione:</strong> {{ (t.resolvedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
                     <p><strong>Chiusura:</strong> {{ (t.closedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
@@ -322,5 +334,9 @@ export class TicketList implements OnInit {
       rejected: 'Rifiutato',
     };
     return labels[status] ?? status;
+  }
+
+  protected attachmentUrl(a: AttachmentResponse): string {
+    return `/api/attachments/${a.id}`;
   }
 }
