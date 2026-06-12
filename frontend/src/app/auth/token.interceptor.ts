@@ -1,6 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
+import { catchError, throwError } from 'rxjs';
 
 export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -16,5 +17,12 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
     headers = headers.set('Accept', 'application/json');
   }
 
-  return next(req.clone({ headers }));
+  return next(req.clone({ headers })).pipe(
+    catchError((err) => {
+      if (err.status === 401 && auth.isLoggedIn) {
+        auth.logout();
+      }
+      return throwError(() => err);
+    }),
+  );
 };
