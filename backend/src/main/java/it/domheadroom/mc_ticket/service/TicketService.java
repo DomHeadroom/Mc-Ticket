@@ -89,12 +89,8 @@ public class TicketService {
     public TicketResponse createTicket(CreateTicketRequest req, User requester, MultipartFile attachment, String source) {
         var ticket = transactionTemplate.execute(status -> persistTicket(req, requester, attachment, source));
 
-        try {
-            nlpService.analyze(ticket);
-            transactionTemplate.execute(status -> ticketRepository.save(ticket));
-        } catch (Exception e) {
-            log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
-        }
+        nlpService.analyze(ticket);
+        transactionTemplate.execute(status -> ticketRepository.save(ticket));
 
         var keywords = ticketKeywordRepository.findByIdTicketId(ticket.getId()).stream()
                 .map(tk -> tk.getKeyword().getTerm())
@@ -152,33 +148,17 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public Page<TicketResponse> getAllTickets(Pageable pageable) {
-        var page = ticketRepository.findAll(pageable);
-        var tickets = page.getContent();
-        var ids = tickets.stream().map(Ticket::getId).toList();
-
-        var keywordsById = ticketKeywordRepository.findByIdTicketIdIn(ids).stream()
-            .collect(Collectors.groupingBy(
-                tk -> tk.getId().getTicketId(),
-                Collectors.mapping(tk -> tk.getKeyword().getTerm(), Collectors.toList())
-            ));
-
-        var attachmentsById = attachmentRepository.findByTicketIdIn(ids).stream()
-            .collect(Collectors.groupingBy(
-                a -> a.getTicket().getId(),
-                Collectors.mapping(AttachmentResponse::from, Collectors.toList())
-            ));
-
-        return page.map(t -> TicketResponse.from(t,
-            keywordsById.getOrDefault(t.getId(), List.of()),
-            attachmentsById.getOrDefault(t.getId(), List.of())));
+        return toPageResponse(ticketRepository.findAll(pageable));
     }
 
     @Transactional(readOnly = true)
     public Page<TicketResponse> searchTickets(TicketFilter filter, Pageable pageable) {
         var spec = TicketSpecifications.fromFilter(filter);
-        var page = ticketRepository.findAll(spec, pageable);
-        var tickets = page.getContent();
-        var ids = tickets.stream().map(Ticket::getId).toList();
+        return toPageResponse(ticketRepository.findAll(spec, pageable));
+    }
+
+    private Page<TicketResponse> toPageResponse(Page<Ticket> page) {
+        var ids = page.getContent().stream().map(Ticket::getId).toList();
 
         var keywordsById = ticketKeywordRepository.findByIdTicketIdIn(ids).stream()
             .collect(Collectors.groupingBy(
