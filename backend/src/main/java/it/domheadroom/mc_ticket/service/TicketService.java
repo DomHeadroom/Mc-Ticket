@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -28,7 +29,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,6 +39,14 @@ import java.util.stream.Collectors;
 public class TicketService {
 
     private static final Logger log = LoggerFactory.getLogger(TicketService.class);
+
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("txt", "log", "json", "csv");
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+            "text/plain",
+            "text/csv",
+            "application/json",
+            "application/octet-stream"
+    );
 
     private final TicketRepository ticketRepository;
     private final CategoryRepository categoryRepository;
@@ -267,21 +278,65 @@ public class TicketService {
     }
 
     private Attachment saveAttachment(Ticket ticket, MultipartFile file, User uploader, AttachmentSource source) {
+        var mimeType = validateAttachment(file);
+        String storedName;
         try {
-            var storedName = fileStorageService.store(file);
+            storedName = fileStorageService.store(file);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Upload file fallito: " + e.getMessage(), e);
+        }
+
+        try {
             var attachment = new Attachment();
             attachment.setTicket(ticket);
             attachment.setFileName(file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown");
             attachment.setFileSizeBytes(file.getSize());
-            attachment.setMimeType(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
+            attachment.setMimeType(mimeType);
             attachment.setStoragePath(storedName);
             attachment.setSource(source);
             attachment.setUploadedBy(uploader);
             attachment.setUploadedAt(OffsetDateTime.now());
             return attachmentRepository.save(attachment);
         } catch (Exception e) {
-            log.warn("Failed to save attachment for ticket {}: {}", ticket.getId(), e.getMessage());
-            return null;
+            deleteStoredFile(storedName);
+            throw e;
+        }
+    }
+
+    private String validateAttachment(MultipartFile file) {
+        var fileName = file.getOriginalFilename();
+        var extension = fileName != null && fileName.contains(".")
+                ? fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT)
+                : "";
+
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            throw new IllegalArgumentException(
+                    "Estensione file non supportata: " + extension + ". Sono ammessi solo .txt, .log, .json e .csv");
+        }
+
+        var contentType = file.getContentType();
+        if (contentType == null || contentType.isBlank()) {
+            return "application/octet-stream";
+        }
+
+        var normalizedMimeType = contentType.toLowerCase(Locale.ROOT).split(";")[0].trim();
+        if ("log".equals(extension) && "text/x-log".equals(normalizedMimeType)) {
+            return "application/octet-stream";
+        }
+
+        if (!ALLOWED_MIME_TYPES.contains(normalizedMimeType)) {
+            throw new IllegalArgumentException(
+                    "Tipo MIME non supportato: " + contentType + ". Sono ammessi solo text/plain, text/csv, application/json e application/octet-stream");
+        }
+
+        return normalizedMimeType;
+    }
+
+    private void deleteStoredFile(String storedName) {
+        try {
+            fileStorageService.delete(storedName);
+        } catch (Exception e) {
+            log.warn("Failed to delete stored file {} after attachment save failure: {}", storedName, e.getMessage());
         }
     }
 
