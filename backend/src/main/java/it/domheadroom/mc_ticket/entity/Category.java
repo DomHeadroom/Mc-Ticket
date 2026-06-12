@@ -32,10 +32,7 @@ public class Category {
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    @JoinColumn(name = "parent_id")
-    private Category parent;
+
 
     @NotNull
     @ColumnDefault("true")

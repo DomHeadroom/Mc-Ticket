@@ -6,14 +6,11 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Map;
 import java.util.UUID;
 
 @Getter
@@ -36,10 +33,6 @@ public class TicketNlpAnalysis {
     @NotNull
     @Column(name = "model_version", nullable = false, length = 100)
     private String modelVersion;
-
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "raw_output")
-    private Map<String, Object> rawOutput;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)

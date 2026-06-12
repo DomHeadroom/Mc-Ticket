@@ -61,10 +61,7 @@ public class Ticket {
     @JoinColumn(name = "requester_id", nullable = false)
     private User requester;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    @JoinColumn(name = "assigned_agent_id")
-    private User assignedAgent;
+
 
     @Size(max = 50)
     @NotNull

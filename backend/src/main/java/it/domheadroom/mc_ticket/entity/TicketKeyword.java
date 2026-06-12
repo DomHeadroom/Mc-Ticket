@@ -31,8 +31,7 @@ public class TicketKeyword {
     @JoinColumn(name = "keyword_id", nullable = false)
     private Keyword keyword;
 
-    @Column(name = "relevance_score", precision = 5, scale = 4)
-    private BigDecimal relevanceScore;
+
 
     @NotNull
     @ColumnDefault("now()")

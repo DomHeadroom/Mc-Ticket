@@ -90,7 +90,6 @@ public class NlpService {
         var analysis = new TicketNlpAnalysis();
         analysis.setTicket(ticket);
         analysis.setModelVersion("nlp-service-1.0");
-        analysis.setRawOutput(null);
         analysis.setSuggestedCategory(category);
         analysis.setSuggestedPriority(priority);
         analysis.setConfidenceScore(response.confidence());
