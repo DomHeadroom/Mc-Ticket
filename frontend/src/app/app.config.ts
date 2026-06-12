@@ -11,6 +11,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([tokenInterceptor])),
-    { provide: BASE_PATH, useValue: 'http://localhost:8080' },
+    { provide: BASE_PATH, useValue: '' },
   ]
 };

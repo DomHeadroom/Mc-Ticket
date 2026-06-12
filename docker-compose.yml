@@ -89,12 +89,10 @@ services:
       seaweedfs-s3:
         condition: service_started
     env_file: .env
-    ports:
-      - 127.0.0.1:8080:8080
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/mcticket
       NLP_BASE_URL: http://nlp:8000
-      CORS_ALLOWED_ORIGINS: http://localhost,http://localhost:4200
+      CORS_ALLOWED_ORIGINS: http://localhost:4200
 
   nlp:
     build: ./nlp
