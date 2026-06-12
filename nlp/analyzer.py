@@ -444,41 +444,6 @@ def estimate_priority(text: str) -> Tuple[str, float]:
 
     return best_priority, min(confidence, 1.0)
 
-
-def retrain(training_data: List[Tuple[str, str]]):
-    global _keyword_model
-    combined = SEED_TRAINING_DATA + training_data if training_data else SEED_TRAINING_DATA
-
-    texts = [t for t, _ in combined]
-    labels = [l for _, l in combined]
-
-    base_clf = LogisticRegression(
-        max_iter=2000,
-        multi_class="multinomial",
-        class_weight="balanced",
-        solver="lbfgs",
-        C=5.0,
-    )
-
-    calibrated_clf = CalibratedClassifierCV(base_clf, cv=5, method="isotonic")
-
-    pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(
-            max_features=8000,
-            ngram_range=(1, 3),
-            preprocessor=_preprocess,
-            stop_words=ITALIAN_STOP_WORDS,
-            sublinear_tf=True,
-            min_df=1,
-            analyzer="word",
-        )),
-        ("clf", calibrated_clf),
-    ])
-    pipeline.fit(texts, labels)
-    joblib.dump(pipeline, MODEL_PATH)
-    _keyword_model = pipeline
-
-
 def analyze(title: str, description: str):
     combined = f"{title} {description}"
 
