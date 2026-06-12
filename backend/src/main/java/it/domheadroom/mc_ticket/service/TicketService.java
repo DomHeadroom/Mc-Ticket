@@ -96,7 +96,13 @@ public class TicketService {
             log.warn("NLP analysis failed for ticket {}: {}", ticket.getId(), e.getMessage());
         }
 
-        return TicketResponse.from(ticket, List.of(), List.of());
+        var keywords = ticketKeywordRepository.findByIdTicketId(ticket.getId()).stream()
+                .map(tk -> tk.getKeyword().getTerm())
+                .toList();
+        var attachments = attachmentRepository.findByTicketIdIn(List.of(ticket.getId())).stream()
+                .map(AttachmentResponse::from)
+                .toList();
+        return TicketResponse.from(ticket, keywords, attachments);
     }
 
     private Ticket persistTicket(CreateTicketRequest req, User requester, MultipartFile attachment, String source) {
