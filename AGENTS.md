@@ -56,7 +56,7 @@ Real NLP (not a stub). Auto-trains at startup on 55 seed examples.
 | `GET /health` | Health check |
 
 - **Keyword extraction**: YAKE (Italian), top 10 keywords sorted by relevance
-- **Category classifier**: TF-IDF + LogisticRegression (scikit-learn) with keyword-based fallback when ML confidence < 0.4
+- **Category classifier**: TF-IDF + LogisticRegression (scikit-learn) with keyword-based fallback when ML confidence < 0.35
   - Categories: `rete`, `database`, `bug-applicativo`, `configurazione`, `hardware`, `servizi-web`, `altro` (7 — matches DB seed)
 - **Priority**: rule-based keyword scoring → `p1` (critical) … `p4` (low); default `p3`
 - **Confidence**: average of category + priority confidence

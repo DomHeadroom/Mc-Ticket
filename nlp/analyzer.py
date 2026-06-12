@@ -391,17 +391,17 @@ def extract_keywords(text: str, top_n: int = 10) -> List[str]:
     return result if result else []
 
 
-_keyword_model = _load_model()
+_category_classifier = _load_model()
 
 
 def classify_category(text: str) -> Tuple[str, float]:
     preprocessed = _preprocess(text)
 
     try:
-        probs = _keyword_model.predict_proba([preprocessed])[0]
+        probs = _category_classifier.predict_proba([preprocessed])[0]
         best_idx = int(np.argmax(probs))
         confidence = float(probs[best_idx])
-        category = _keyword_model.classes_[best_idx]
+        category = _category_classifier.classes_[best_idx]
 
         if confidence >= 0.35:
             return str(category), round(confidence, 4)
