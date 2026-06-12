@@ -63,7 +63,6 @@ public class TicketController {
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/tickets")
     public ResponseEntity<Page<TicketResponse>> getAllTickets(
             @RequestParam(required = false) String search,
@@ -72,11 +71,17 @@ public class TicketController {
             @RequestParam(required = false) String priority,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        var filter = new TicketFilter(search, status, categorySlug, priority, dateFrom, dateTo);
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal User user) {
+
+        boolean isAdmin = user.getRole().equalsIgnoreCase("admin");
+        UUID requesterId = isAdmin ? null : user.getId();
+
+        var filter = new TicketFilter(search, status, categorySlug, priority, dateFrom, dateTo, requesterId);
         var hasFilters = search != null || status != null || categorySlug != null
             || priority != null || dateFrom != null || dateTo != null;
-        if (hasFilters) {
+
+        if (hasFilters || requesterId != null) {
             return ResponseEntity.ok(ticketService.searchTickets(filter, pageable));
         }
         return ResponseEntity.ok(ticketService.getAllTickets(pageable));

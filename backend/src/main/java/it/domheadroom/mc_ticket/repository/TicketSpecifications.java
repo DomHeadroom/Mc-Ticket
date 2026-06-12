@@ -52,6 +52,10 @@ public class TicketSpecifications {
                     root.get("createdAt"), filter.dateTo().atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC)));
             }
 
+            if (filter.requesterId() != null) {
+                predicates.add(cb.equal(root.get("requester").get("id"), filter.requesterId()));
+            }
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

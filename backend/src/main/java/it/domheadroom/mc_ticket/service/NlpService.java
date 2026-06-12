@@ -7,9 +7,12 @@ import it.domheadroom.mc_ticket.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+
+import java.time.Duration;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -27,12 +30,20 @@ public class NlpService {
 
     public NlpService(
             @Value("${app.nlp.base-url}") String nlpBaseUrl,
+            @Value("${app.nlp.connect-timeout-ms:3000}") int connectTimeoutMs,
+            @Value("${app.nlp.read-timeout-ms:5000}") int readTimeoutMs,
             CategoryRepository categoryRepository,
             KeywordRepository keywordRepository,
             TicketKeywordRepository ticketKeywordRepository,
             TicketNlpAnalysisRepository ticketNlpAnalysisRepository
     ) {
-        this.restClient = RestClient.create(nlpBaseUrl);
+        var factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofMillis(connectTimeoutMs));
+        factory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
+        this.restClient = RestClient.builder()
+                .baseUrl(nlpBaseUrl)
+                .requestFactory(factory)
+                .build();
         this.categoryRepository = categoryRepository;
         this.keywordRepository = keywordRepository;
         this.ticketKeywordRepository = ticketKeywordRepository;
