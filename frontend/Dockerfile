@@ -1,9 +1,9 @@
-FROM docker.io/node:26-bookworm AS build
+FROM docker.io/oven/bun:1.3.14 AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN bun run build
 
 FROM docker.io/nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
