@@ -66,6 +66,7 @@ public class TicketController {
     @GetMapping("/tickets")
     public ResponseEntity<Page<TicketResponse>> getAllTickets(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String categorySlug,
             @RequestParam(required = false) String priority,
@@ -77,8 +78,8 @@ public class TicketController {
         boolean isAdmin = user.getRole().equalsIgnoreCase("admin");
         UUID requesterId = isAdmin ? null : user.getId();
 
-        var filter = new TicketFilter(search, status, categorySlug, priority, dateFrom, dateTo, requesterId);
-        var hasFilters = search != null || status != null || categorySlug != null
+        var filter = new TicketFilter(search, keyword, status, categorySlug, priority, dateFrom, dateTo, requesterId);
+        var hasFilters = search != null || keyword != null || status != null || categorySlug != null
             || priority != null || dateFrom != null || dateTo != null;
 
         if (hasFilters || requesterId != null) {

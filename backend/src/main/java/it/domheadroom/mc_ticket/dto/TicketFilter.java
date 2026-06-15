@@ -5,11 +5,12 @@ import java.util.UUID;
 
 public record TicketFilter(
     String search,
+    String keyword,
     String status,
     String categorySlug,
     String priority,
     LocalDate dateFrom,
     LocalDate dateTo,
-    UUID requesterId 
+    UUID requesterId
 ) {}
 

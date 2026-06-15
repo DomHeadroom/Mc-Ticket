@@ -1,16 +1,18 @@
 package it.domheadroom.mc_ticket.repository;
 
 import it.domheadroom.mc_ticket.dto.TicketFilter;
+import it.domheadroom.mc_ticket.entity.Keyword;
 import it.domheadroom.mc_ticket.entity.PriorityLevel;
 import it.domheadroom.mc_ticket.entity.Ticket;
+import it.domheadroom.mc_ticket.entity.TicketKeyword;
 import it.domheadroom.mc_ticket.entity.TicketStatus;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class TicketSpecifications {
 
@@ -24,6 +26,16 @@ public class TicketSpecifications {
                     cb.like(cb.lower(root.get("title")), pattern),
                     cb.like(cb.lower(root.get("description")), pattern)
                 ));
+            }
+
+            if (filter.keyword() != null && !filter.keyword().isBlank()) {
+                var pattern = "%" + filter.keyword().toLowerCase() + "%";
+                var sub = query.subquery(UUID.class);
+                var tk = sub.from(TicketKeyword.class);
+                var kw = tk.join("keyword");
+                sub.select(tk.get("ticket").get("id"))
+                   .where(cb.like(cb.lower(kw.get("term")), pattern));
+                predicates.add(root.get("id").in(sub));
             }
 
             if (filter.status() != null && !filter.status().isBlank()) {
