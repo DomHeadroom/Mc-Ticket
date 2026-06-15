@@ -95,6 +95,17 @@ public class TicketController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PatchMapping("/tickets/{id}/status")
+    public ResponseEntity<TicketResponse> updateStatus(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body) {
+        var newStatus = body.get("status");
+        if (newStatus == null || newStatus.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(ticketService.updateStatus(id, newStatus));
+    }
+
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryResponse>> getActiveCategories() {
         return ResponseEntity.ok(ticketService.getActiveCategories());

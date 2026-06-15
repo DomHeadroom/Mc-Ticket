@@ -189,6 +189,38 @@ public class TicketService {
                         .toList()));
     }
 
+    @Transactional
+    public TicketResponse updateStatus(UUID id, String newStatus) {
+        var ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Ticket non trovato: " + id));
+
+        TicketStatus status;
+        try {
+            status = TicketStatus.valueOf(newStatus);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Stato non valido: " + newStatus);
+        }
+
+        ticket.setStatus(status);
+        ticket.setUpdatedAt(OffsetDateTime.now());
+
+        if (status == TicketStatus.resolved && ticket.getResolvedAt() == null) {
+            ticket.setResolvedAt(OffsetDateTime.now());
+        } else if (status == TicketStatus.closed && ticket.getClosedAt() == null) {
+            ticket.setClosedAt(OffsetDateTime.now());
+        }
+
+        ticketRepository.save(ticket);
+
+        var keywords = ticketKeywordRepository.findByIdTicketId(id).stream()
+                .map(tk -> tk.getKeyword().getTerm())
+                .toList();
+        var attachments = attachmentRepository.findByTicketIdIn(List.of(id)).stream()
+                .map(AttachmentResponse::from)
+                .toList();
+        return TicketResponse.from(ticket, keywords, attachments);
+    }
+
     @Transactional(readOnly = true)
     public List<CategoryResponse> getActiveCategories() {
         return categoryRepository.findByIsActiveTrue().stream()
