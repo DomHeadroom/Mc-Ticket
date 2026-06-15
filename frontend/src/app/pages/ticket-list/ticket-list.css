@@ -53,6 +53,15 @@
   padding-bottom: 8px;
   min-height: 0;
 }
+
+.filter-keyword-nlp ::ng-deep .mat-mdc-text-field-wrapper {
+  height: 56px;
+}
+.filter-keyword-nlp ::ng-deep .mat-mdc-form-field-infix {
+  padding-top: 14px;
+  padding-bottom: 10px;
+  min-height: 0;
+}
 .filter-search ::ng-deep .mat-mdc-form-field-subscript-wrapper {
   display: none;
 }

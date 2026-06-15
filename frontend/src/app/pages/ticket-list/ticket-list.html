@@ -21,7 +21,7 @@
         @if (showAdvanced()) {
           <div class="filter-advanced">
             <div class="filter-advanced-fields">
-              <mat-form-field appearance="outline" class="filter-search">
+              <mat-form-field appearance="outline" class="filter-search filter-keyword-nlp">
                 <mat-label>Keyword NLP</mat-label>
                 <input matInput [(ngModel)]="filterKeyword" placeholder="Es. vpn, database, crash..." />
                 @if (filterKeyword) {

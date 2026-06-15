@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { MatTableModule } from '@angular/material/table';
@@ -51,6 +51,7 @@ interface PageResponse {
 export class TicketList implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly basePath = inject(BASE_PATH);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   protected readonly tickets = signal<TicketResponse[]>([]);
   protected readonly totalElements = signal(0);
@@ -94,6 +95,7 @@ export class TicketList implements OnInit {
         this.totalElements.set(res.totalElements);
         this.totalPages.set(res.totalPages);
         this.page.set(res.number);
+        setTimeout(() => this.cdr.detectChanges());
       },
     });
   }
@@ -182,6 +184,7 @@ export class TicketList implements OnInit {
         next: (updated) => {
           this.tickets.update(list => list.map(t => t.id === updated.id ? updated : t));
           delete this.pendingStatus[ticket.id!];
+          setTimeout(() => this.cdr.detectChanges());
         },
       });
   }
