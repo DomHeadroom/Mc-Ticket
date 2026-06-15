@@ -194,6 +194,24 @@ interface PageResponse {
                     <p><strong>Creazione:</strong> {{ (t.openedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
                     <p><strong>Risoluzione:</strong> {{ (t.resolvedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
                     <p><strong>Chiusura:</strong> {{ (t.closedAt | date:'dd/MM/yyyy HH:mm') || '-' }}</p>
+
+                    <div class="status-update-bar">
+                      <mat-form-field appearance="outline" class="status-select">
+                        <mat-select [(ngModel)]="pendingStatus[t.id!]">
+                          <mat-option value="open">Aperto</mat-option>
+                          <mat-option value="in_progress">In corso</mat-option>
+                          <mat-option value="pending_user">In attesa</mat-option>
+                          <mat-option value="resolved">Risolto</mat-option>
+                          <mat-option value="closed">Chiuso</mat-option>
+                          <mat-option value="rejected">Rifiutato</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                      <button mat-flat-button color="primary"
+                              [disabled]="!pendingStatus[t.id!] || pendingStatus[t.id!] === t.status"
+                              (click)="onUpdateStatus(t)">
+                        Aggiorna
+                      </button>
+                    </div>
                   </div>
                 }
               </td>
@@ -240,6 +258,8 @@ export class TicketList implements OnInit {
   protected readonly columns = ['title', 'status', 'urgency', 'createdAt'];
   protected readonly expandedElement = signal<TicketResponse | null>(null);
   protected readonly showAdvanced = signal(false);
+
+  protected pendingStatus: Record<string, string> = {};
 
   protected filterSearch = '';
   protected filterKeyword = '';
@@ -349,6 +369,19 @@ export class TicketList implements OnInit {
       rejected: 'Rifiutato',
     };
     return labels[status] ?? status;
+  }
+
+  protected onUpdateStatus(ticket: TicketResponse): void {
+    const newStatus = this.pendingStatus[ticket.id!];
+    if (!newStatus || newStatus === ticket.status) return;
+
+    this.http.patch<TicketResponse>(`${this.basePath}/api/tickets/${ticket.id}/status`, { status: newStatus })
+      .subscribe({
+        next: (updated) => {
+          this.tickets.update(list => list.map(t => t.id === updated.id ? updated : t));
+          delete this.pendingStatus[ticket.id!];
+        },
+      });
   }
 
   protected attachmentUrl(a: AttachmentResponse): string {
