@@ -69,6 +69,17 @@ interface PageResponse {
             @if (showAdvanced()) {
               <div class="filter-advanced">
                 <div class="filter-advanced-fields">
+                  <mat-form-field appearance="outline" class="filter-search">
+                    <mat-label>Keyword NLP</mat-label>
+                    <input matInput [(ngModel)]="filterKeyword" placeholder="Es. vpn, database, crash..." />
+                    @if (filterKeyword) {
+                      <button matSuffix mat-icon-button aria-label="Cancella keyword" (click)="filterKeyword = ''">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    }
+                  </mat-form-field>
+                </div>
+                <div class="filter-advanced-fields">
                   <mat-form-field appearance="outline" class="filter-select">
                     <mat-label>Stato</mat-label>
                     <mat-select [(ngModel)]="filterStatus">
@@ -111,6 +122,7 @@ interface PageResponse {
                 <div class="filter-advanced-fields">
                   <mat-form-field appearance="outline" class="filter-date">
                     <mat-label>Dal</mat-label>
+
                     <input matInput type="date" [(ngModel)]="filterDateFrom" />
                   </mat-form-field>
 
@@ -230,6 +242,7 @@ export class TicketList implements OnInit {
   protected readonly showAdvanced = signal(false);
 
   protected filterSearch = '';
+  protected filterKeyword = '';
   protected filterStatus = '';
   protected filterCategory = '';
   protected filterPriority = '';
@@ -246,6 +259,7 @@ export class TicketList implements OnInit {
       .set('size', this.pageSize());
 
     if (this.filterSearch) params = params.set('search', this.filterSearch);
+    if (this.filterKeyword) params = params.set('keyword', this.filterKeyword);
     if (this.filterStatus) params = params.set('status', this.filterStatus);
     if (this.filterCategory) params = params.set('categorySlug', this.filterCategory);
     if (this.filterPriority) params = params.set('priority', this.filterPriority);
@@ -269,6 +283,7 @@ export class TicketList implements OnInit {
 
   protected onReset(): void {
     this.filterSearch = '';
+    this.filterKeyword = '';
     this.filterStatus = '';
     this.filterCategory = '';
     this.filterPriority = '';
